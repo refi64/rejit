@@ -67,7 +67,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             | jmp =>*pcl-1
         }
         |=>errpc:
-        ia->kind += ISKIP;
+        skip(ia);
         break;
     case IDOT:
         | mov TMPB, [STR]
@@ -102,13 +102,19 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         GROW;
         GROW;
         compile_one(Dst, ia, errpc, pcl);
-        ia->kind += ISKIP;
+        skip(ia);
         | jmp =>*pcl-1
         |=>errpc:
         errpc = 0;
         compile_one(Dst, ib, errpc, pcl);
         |=>*pcl-1:
-        ib->kind += ISKIP;
+        skip(ib);
+        break;
+    case IGROUP:
+        for (ia = (rejit_instruction*)instr++->value; instr != ia; ++instr) {
+            compile_one(Dst, instr, errpc, pcl);
+            skip(instr);
+        }
         break;
     default: printf("unrecognized opcode: %d\n", instr->kind); abort();
     };

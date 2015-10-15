@@ -82,5 +82,24 @@ LIBCUT_TEST(test_or) {
     LIBCUT_TEST_EQ(rejit_match(m, ""), -1);
 }
 
+LIBCUT_TEST(test_group) {
+    rejit_instruction instrs[] = {{IGROUP}, {ICHR, 'a'}, {INULL}}; // (a)
+    instrs[0].value = (intptr_t)&instrs[2];
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "a"), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, ""), -1);
+}
+
+LIBCUT_TEST(test_opt_group) {
+    rejit_instruction instrs[] = {{IOPT}, {IGROUP}, {ICHR, 'a'}, {ICHR, 'b'},
+        {INULL}}; // (ab)?
+    instrs[1].value = (intptr_t)&instrs[3];
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "ab"), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "a"), 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "b"), 0);
+    LIBCUT_TEST_EQ(rejit_match(m, ""), 0);
+}
+
 LIBCUT_MAIN(test_chr, test_dot, test_plus, test_star, test_opt, test_begin,
-    test_end, test_set, test_or)
+    test_end, test_set, test_or, test_group, test_opt_group)

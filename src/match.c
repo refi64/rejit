@@ -35,6 +35,10 @@ static void unskip(rejit_instruction* instr) {
     }
 }
 
+static void skip(rejit_instruction* instr) {
+    if (instr->kind < ISKIP) instr->kind += ISKIP;
+}
+
 #include "codegen.c"
 
 static void* link_and_encode(dasm_State** d) {
