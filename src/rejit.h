@@ -14,10 +14,12 @@ typedef struct rejit_matcher_type {
 
 #ifdef REJIT_INSTR
 typedef enum {
-    INULL, ISKIP, ICHR, IDOT, IBEGIN, IEND,
-    ISTAR, IPLUS, IOPT, ISET, IOR
+    INULL, ICHR, IDOT, IBEGIN, IEND,
+    ISET, IARG, ISTAR, IPLUS, IOPT, IVARG, IOR,
+    ISKIP
+    // > iarg: following op is argument.
+    // > varg: value is rejit_instruction*.
     // For ISET, value is const char*.
-    // For IOR, value is rejit_instruction*
 } rejit_instr_kind;
 #else
 typedef int rejit_instr_kind;

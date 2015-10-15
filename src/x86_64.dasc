@@ -42,8 +42,9 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
     rejit_instruction* ia, *ib;
     unsigned long magic;
     char min;
+    if (instr->kind > ISKIP) return;
     switch (instr->kind) {
-    case ISKIP: break;
+    case ISKIP: printf("ISKIP was added to INULL\n"); abort();
     case ICHR:
         | cmp byte [STR], instr->value
         | jne =>errpc
@@ -59,13 +60,14 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         GROW;
         if (instr->kind != IOPT)
             |=>*pcl-1:
+        if (instr->kind == IPLUS) unskip(ia);
         compile_one(Dst, ia, errpc, pcl);
         if (instr->kind != IOPT) {
             // Without the braces here, DynAsm generates incorrect code.
             | jmp =>*pcl-1
         }
         |=>errpc:
-        ia->kind = ISKIP;
+        ia->kind += ISKIP;
         break;
     case IDOT:
         | mov TMPB, [STR]
@@ -100,13 +102,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         GROW;
         GROW;
         compile_one(Dst, ia, errpc, pcl);
-        ia->kind = ISKIP;
+        ia->kind += ISKIP;
         | jmp =>*pcl-1
         |=>errpc:
         errpc = 0;
         compile_one(Dst, ib, errpc, pcl);
         |=>*pcl-1:
-        ib->kind = ISKIP;
+        ib->kind += ISKIP;
         break;
     default: printf("unrecognized opcode: %d\n", instr->kind); abort();
     };

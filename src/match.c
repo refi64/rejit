@@ -27,6 +27,14 @@ static unsigned long genmagic(const char* s, char* min) {
     return res;
 }
 
+static void unskip(rejit_instruction* instr) {
+    if (instr->kind > ISKIP) {
+        instr->kind -= ISKIP;
+        if (instr->kind > IVARG) unskip((rejit_instruction*)instr->value);
+        if (instr->kind > IARG) unskip(instr+1);
+    }
+}
+
 #include "codegen.c"
 
 static void* link_and_encode(dasm_State** d) {
