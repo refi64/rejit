@@ -1,0 +1,9 @@
+src/rejit.h
+src/match.c
+src/x86_64.dasc
+src/parse.c
+tst.c
+fbuildroot.py
+!:
+howl.config.project_build_command = 'fbuild'
+--howl.config.clang_completion = true

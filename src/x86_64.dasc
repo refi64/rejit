@@ -1,0 +1,114 @@
+#include "dynasm/dasm_x86.h"
+
+| .if X64
+| .arch x64
+| .define STR, rdi
+| .define SAV, r11
+| .define TMPB, r12b
+| .define TMPD0, r12d
+| .define TMPD1, edx
+| .define RET, rax
+| .else
+| .arch x86
+| .define STR, edi
+| .define SAV, ecx
+| .define TMPB, dh
+| .define TMPD0, edx
+| .define TMPD1, eax
+| .define RET, eax
+| .endif
+| .section code
+| .globals lbl_
+| .actionlist actions
+
+static void compile_prolog(dasm_State** Dst) {
+    | .if not X64
+    | mov STR, [esp+4]
+    | .endif
+    | mov SAV, STR
+}
+
+static void compile_epilog(dasm_State** Dst) {
+    | mov RET, STR
+    | sub RET, SAV
+    | ret
+    |=>0:
+    | mov RET, -1
+    | ret
+}
+
+static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
+    int* pcl) {
+    rejit_instruction* ia, *ib;
+    unsigned long magic;
+    char min;
+    switch (instr->kind) {
+    case ISKIP: break;
+    case ICHR:
+        | cmp byte [STR], instr->value
+        | jne =>*errpc
+        | inc STR
+        break;
+    case ISTAR:
+    case IPLUS:
+    case IOPT:
+        ia = instr+1;
+        if (instr->kind == IPLUS) compile_one(Dst, ia, errpc, pcl);
+        *errpc = *pcl;
+        GROW;
+        GROW;
+        if (instr->kind != IOPT)
+            |=>*pcl-1:
+        compile_one(Dst, ia, errpc, pcl);
+        if (instr->kind != IOPT) {
+            // Without the braces here, DynAsm generates incorrect code.
+            | jmp =>*pcl-1
+        }
+        |=>*errpc:
+        *errpc = 0;
+        ia->kind = ISKIP;
+        break;
+    case IDOT:
+        | mov TMPB, [STR]
+        | cmp TMPB, 10 // newline
+        | je =>*errpc
+        | test TMPB, TMPB // null
+        | je =>*errpc
+        | inc STR
+        break;
+    case IBEGIN:
+        | cmp SAV, STR
+        | jne =>*errpc
+        break;
+    case IEND:
+        | cmp byte [STR], 0
+        | jne =>*errpc
+        break;
+    case ISET:
+        magic = genmagic((const char*)instr->value, &min);
+        | mov TMPD0, magic
+        | movzx TMPD1, byte [STR]
+        | sub TMPD1, min
+        | js =>*errpc
+        | bt TMPD0, TMPD1
+        | jae =>*errpc
+        | inc STR
+        break;
+    case IOR:
+        ia = instr+1;
+        ib = (rejit_instruction*)instr->value;
+        *errpc = *pcl;
+        GROW;
+        GROW;
+        compile_one(Dst, ia, errpc, pcl);
+        ia->kind = ISKIP;
+        | jmp =>*pcl-1
+        |=>*errpc:
+        *errpc = 0;
+        compile_one(Dst, ib, errpc, pcl);
+        |=>*pcl-1:
+        ib->kind = ISKIP;
+        break;
+    default: printf("unrecognized opcode: %d\n", instr->kind); abort();
+    };
+}
