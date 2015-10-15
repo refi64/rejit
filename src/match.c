@@ -12,7 +12,7 @@
 
 #define MAXSZ 100
 
-static void compile_one(dasm_State**, rejit_instruction*, int*, int*);
+static void compile_one(dasm_State**, rejit_instruction*, int, int*);
 
 #define GROW dasm_growpc(Dst, ++*pcl)
 
@@ -49,7 +49,7 @@ static rejit_func compile(dasm_State** d, rejit_instruction* instrs) {
     dasm_growpc(d, 1);
 
     compile_prolog(d);
-    for (i=0; instrs[i].kind; ++i) compile_one(d, &instrs[i], &errpc, &pcl);
+    for (i=0; instrs[i].kind; ++i) compile_one(d, &instrs[i], errpc, &pcl);
     compile_epilog(d);
 
     return link_and_encode(d);
