@@ -42,6 +42,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
     rejit_instruction* ia, *ib;
     unsigned long magic;
     char min;
+    int bk;
     if (instr->kind > ISKIP) return;
     switch (instr->kind) {
     case ISKIP: printf("ISKIP was added to INULL\n"); abort();
@@ -57,14 +58,15 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         if (instr->kind == IPLUS) compile_one(Dst, ia, errpc, pcl);
         errpc = *pcl;
         GROW;
+        bk = *pcl;
         GROW;
         if (instr->kind != IOPT)
-            |=>*pcl-1:
+            |=>bk:
         if (instr->kind == IPLUS) unskip(ia);
         compile_one(Dst, ia, errpc, pcl);
         if (instr->kind != IOPT) {
             // Without the braces here, DynAsm generates incorrect code.
-            | jmp =>*pcl-1
+            | jmp =>bk
         }
         |=>errpc:
         skip(ia);

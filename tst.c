@@ -93,7 +93,7 @@ LIBCUT_TEST(test_group) {
 LIBCUT_TEST(test_opt_group) {
     rejit_instruction instrs[] = {{IOPT}, {IGROUP}, {ICHR, 'a'}, {ICHR, 'b'},
         {INULL}}; // (ab)?
-    instrs[1].value = (intptr_t)&instrs[3];
+    instrs[1].value = (intptr_t)&instrs[4];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "ab"), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "a"), 0);
