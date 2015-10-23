@@ -8,6 +8,10 @@
 | .define TMPD0, r12d
 | .define TMPD1, edx
 | .define RET, rax
+| .define TOS, qword [rsp]
+| .macro discard
+| add SP, 8
+| .endmacro
 | .else
 | .arch x86
 | .define STR, edi
@@ -16,6 +20,10 @@
 | .define TMPD0, edx
 | .define TMPD1, eax
 | .define RET, eax
+| .define TOS, dword [esp]
+| .macro discard
+| add SP, 4
+| .endmacro
 | .endif
 | .section code
 | .globals lbl_
@@ -56,6 +64,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
     case IOPT:
         ia = instr+1;
         if (instr->kind == IPLUS) compile_one(Dst, ia, errpc, pcl);
+        | push STR
         errpc = *pcl;
         GROW;
         bk = *pcl;
@@ -64,11 +73,38 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             |=>bk:
         if (instr->kind == IPLUS) unskip(ia);
         compile_one(Dst, ia, errpc, pcl);
+        /*
+           XXX: For IOPT, this will basically generate:
+
+           mov TOS, STR
+           errpc:
+           pop STR
+
+           which seems kind of redundant to me? I mean, I guess a jump may not be
+           much faster...
+
+           According to http://www.agner.org/optimize/instruction_tables.pdf,
+           a jump to a near memory location takes 1 cycle, addition takes 1 cycle,
+           and a mov to memory from a register takes 1 cycle. Popping to a reg
+           takes 2 cyles. So the only alternative code I can think of:
+
+           jmp correct ; 1 cycle
+           errpc:
+           pop STR     ; 2 cycles
+           jmp after   ; 1 cycle
+           correct:
+           add rsp, 8  ; 1 cycle
+
+           would use 3 cycles on failure and 2 cycles on match...just like the
+           current code. I need to benchmark it a bit more.
+        */
+        | mov TOS, STR
         if (instr->kind != IOPT) {
             // Without the braces here, DynAsm generates incorrect code.
             | jmp =>bk
         }
         |=>errpc:
+        | pop STR
         skip(ia);
         break;
     case IDOT:
