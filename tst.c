@@ -101,5 +101,32 @@ LIBCUT_TEST(test_opt_group) {
     LIBCUT_TEST_EQ(rejit_match(m, ""), 0);
 }
 
+LIBCUT_TEST(test_star_group) {
+    rejit_instruction instrs[] = {{ISTAR}, {IGROUP}, {ICHR, 'a'}, {ICHR, 'b'},
+        {INULL}}; // (ab)*
+    instrs[1].value = (intptr_t)&instrs[4];
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "ab"), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "abab"), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "ababab"), 6);
+    LIBCUT_TEST_EQ(rejit_match(m, "ababa"), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "a"), 0);
+    LIBCUT_TEST_EQ(rejit_match(m, ""), 0);
+}
+
+LIBCUT_TEST(test_plus_group) {
+    rejit_instruction instrs[] = {{IPLUS}, {IGROUP}, {ICHR, 'a'}, {ICHR, 'b'},
+        {INULL}}; // (ab)+
+    instrs[1].value = (intptr_t)&instrs[4];
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "ab"), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "abab"), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "ababab"), 6);
+    LIBCUT_TEST_EQ(rejit_match(m, "ababa"), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "a"), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, ""), -1);
+}
+
 LIBCUT_MAIN(test_chr, test_dot, test_plus, test_star, test_opt, test_begin,
-    test_end, test_set, test_or, test_group, test_opt_group)
+    test_end, test_set, test_or, test_group, test_opt_group, test_star_group,
+    test_plus_group)

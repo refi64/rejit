@@ -28,8 +28,12 @@ static unsigned long genmagic(const char* s, char* min) {
 }
 
 static void unskip(rejit_instruction* instr) {
-    if (instr->kind > ISKIP) {
-        instr->kind -= ISKIP;
+    rejit_instruction* i;
+    if (instr->kind > ISKIP) instr->kind -= ISKIP;
+    if (instr->kind == IGROUP)
+        for (i = (rejit_instruction*)instr++->value; instr != i; ++instr)
+            unskip(instr);
+    else {
         if (instr->kind > IVARG) unskip((rejit_instruction*)instr->value);
         if (instr->kind > IARG) unskip(instr+1);
     }
