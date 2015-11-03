@@ -45,18 +45,18 @@ static void compile_epilog(dasm_State** Dst) {
     | ret
 }
 
-static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
+static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     int* pcl) {
     rejit_instruction* ia, *ib;
     unsigned long magic;
     char min;
-    int bk;
+    int ebk = *errpc, bk;
     if (instr->kind > ISKIP) return;
     switch (instr->kind) {
     case ISKIP: printf("ISKIP was added to INULL\n"); abort();
     case ICHR:
         | cmp byte [STR], instr->value
-        | jne =>errpc
+        | jne =>*errpc
         | inc STR
         break;
     case ISTAR:
@@ -65,7 +65,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         ia = instr+1;
         if (instr->kind == IPLUS) compile_one(Dst, ia, errpc, pcl);
         | push STR
-        errpc = *pcl;
+        *errpc = *pcl;
         GROW;
         bk = *pcl;
         GROW;
@@ -103,47 +103,47 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             // Without the braces here, DynAsm generates incorrect code.
             | jmp =>bk
         }
-        |=>errpc:
+        |=>*errpc:
         | pop STR
         skip(ia);
         break;
     case IDOT:
         | mov TMPB, [STR]
         | cmp TMPB, 10 // newline
-        | je =>errpc
+        | je =>*errpc
         | test TMPB, TMPB // null
-        | je =>errpc
+        | je =>*errpc
         | inc STR
         break;
     case IBEGIN:
         | cmp SAV, STR
-        | jne =>errpc
+        | jne =>*errpc
         break;
     case IEND:
         | cmp byte [STR], 0
-        | jne =>errpc
+        | jne =>*errpc
         break;
     case ISET:
         magic = genmagic((const char*)instr->value, &min);
         | mov TMPD0, magic
         | movzx TMPD1, byte [STR]
         | sub TMPD1, min
-        | js =>errpc
+        | js =>*errpc
         | bt TMPD0, TMPD1
-        | jae =>errpc
+        | jae =>*errpc
         | inc STR
         break;
     case IOR:
         ia = instr+1;
         ib = (rejit_instruction*)instr->value;
-        errpc = *pcl;
+        *errpc = *pcl;
         GROW;
         GROW;
         compile_one(Dst, ia, errpc, pcl);
         skip(ia);
         | jmp =>*pcl-1
-        |=>errpc:
-        errpc = 0;
+        |=>*errpc:
+        *errpc = 0;
         compile_one(Dst, ib, errpc, pcl);
         |=>*pcl-1:
         skip(ib);
@@ -156,4 +156,5 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         break;
     default: printf("unrecognized opcode: %d\n", instr->kind); abort();
     };
+    *errpc = ebk;
 }
