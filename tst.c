@@ -74,7 +74,8 @@ LIBCUT_TEST(test_set) {
 }
 
 LIBCUT_TEST(test_or) {
-    rejit_instruction instrs[] = {{IOR}, {ICHR, 'a'}, {ICHR, 'b'}, {INULL}}; // a|b
+    rejit_instruction instrs[] = {{IOR}, {ICHR, 'a'}, {ICHR, 'b'}, {INULL}};
+        // a|b
     instrs[0].value = (intptr_t)&instrs[2];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "a"), 1);
