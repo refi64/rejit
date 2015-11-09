@@ -107,6 +107,19 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | pop STR
         skip(ia);
         break;
+    case IMSTAR: abort();
+    case IMPLUS:
+        ia = instr+1;
+        bk = *pcl;
+        GROW;
+        |=>bk:
+        /* if (instr->kind == IMSTAR) { */
+        /*     *errpc = bk+1; */
+        /*     GROW; */
+        /* } */
+        compile_one(Dst, ia, errpc, pcl);
+        skip(ia);
+        break;
     case IDOT:
         | mov TMPB, [STR]
         | cmp TMPB, 10 // newline
@@ -156,5 +169,5 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         break;
     default: printf("unrecognized opcode: %d\n", instr->kind); abort();
     };
-    *errpc = ebk;
+    if (instr->kind != IMSTAR && instr->kind != IMPLUS) *errpc = ebk;
 }

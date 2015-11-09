@@ -128,6 +128,15 @@ LIBCUT_TEST(test_plus_group) {
     LIBCUT_TEST_EQ(rejit_match(m, ""), -1);
 }
 
+LIBCUT_TEST(test_mplus) {
+    rejit_instruction instrs[] = {{IMPLUS}, {IDOT}, {ICHR, 'b'}, {INULL}}; // .+?b
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcb"), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "b"), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "abb"), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "bb"), 2);
+}
+
 LIBCUT_MAIN(test_chr, test_dot, test_plus, test_star, test_opt, test_begin,
     test_end, test_set, test_or, test_group, test_opt_group, test_star_group,
-    test_plus_group)
+    test_plus_group, test_mplus)
