@@ -146,6 +146,16 @@ LIBCUT_TEST(test_mstar) {
     LIBCUT_TEST_EQ(rejit_match(m, "bb"), 1);
 }
 
+LIBCUT_TEST(test_or_mixed) {
+    rejit_instruction instrs[] = {{IOR}, {ICHR, 'b'}, {ISTAR}, {ICHR, 'a'},
+        {INULL}}; // (b|a*)
+    instrs[0].value = (intptr_t)&instrs[2];
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "aaaa"), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "b"), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, ""), 0);
+}
+
 LIBCUT_MAIN(test_chr, test_dot, test_plus, test_star, test_opt, test_begin,
     test_end, test_set, test_or, test_group, test_opt_group, test_star_group,
-    test_plus_group, test_mplus, test_mstar)
+    test_plus_group, test_mplus, test_mstar, test_or_mixed)

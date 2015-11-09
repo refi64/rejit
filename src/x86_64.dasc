@@ -155,14 +155,15 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         *errpc = *pcl;
         GROW;
         GROW;
+        bk = *pcl-1;
         compile_one(Dst, ia, errpc, pcl);
         skip(ia);
-        | jmp =>*pcl-1
+        | jmp =>bk
         |=>*errpc:
-        *errpc = 0;
+        *errpc = ebk;
         compile_one(Dst, ib, errpc, pcl);
-        |=>*pcl-1:
         skip(ib);
+        |=>bk:
         break;
     case IGROUP:
         for (ia = (rejit_instruction*)instr++->value; instr != ia; ++instr) {
