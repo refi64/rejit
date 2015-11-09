@@ -107,18 +107,21 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | pop STR
         skip(ia);
         break;
-    case IMSTAR: abort();
+    case IMSTAR:
     case IMPLUS:
         ia = instr+1;
         bk = *pcl;
         GROW;
+        if (instr->kind == IMSTAR) {
+            GROW;
+            | jmp =>bk+1
+        }
         |=>bk:
-        /* if (instr->kind == IMSTAR) { */
-        /*     *errpc = bk+1; */
-        /*     GROW; */
-        /* } */
         compile_one(Dst, ia, errpc, pcl);
         skip(ia);
+        if (instr->kind == IMSTAR)
+            |=>bk+1:
+        *errpc = bk;
         break;
     case IDOT:
         | mov TMPB, [STR]
