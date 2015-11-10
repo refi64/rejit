@@ -40,6 +40,7 @@ rejit_parse_result rejit_parse(const char* str, int* err);
 void rejit_free_parse_result(rejit_parse_result res);
 rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups);
 int rejit_match(rejit_matcher m, const char* str);
+int rejit_search(rejit_matcher m, const char* str, const char** tgt);
 void rejit_free_matcher(rejit_matcher m);
 
 #endif

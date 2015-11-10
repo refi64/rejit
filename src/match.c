@@ -96,5 +96,11 @@ rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups) {
 }
 
 int rejit_match(rejit_matcher m, const char* str) { return m->func(str); }
+int rejit_search(rejit_matcher m, const char* str, const char** tgt) {
+    int res = -1;
+    for (;res == -1 && *str; ++str) res = rejit_match(m, str);
+    if (tgt != NULL && res != -1) *tgt = str+1;
+    return res;
+}
 
 void rejit_free_matcher(rejit_matcher m) { munmap(m->func, m->sz); free(m); }

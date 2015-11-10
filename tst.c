@@ -156,6 +156,21 @@ LIBCUT_TEST(test_or_mixed) {
     LIBCUT_TEST_EQ(rejit_match(m, ""), 0);
 }
 
+LIBCUT_TEST(test_search) {
+    rejit_instruction instrs[] = {{ICHR, 'a'}, {INULL}}; // a
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    const char* tgt;
+    LIBCUT_TEST_EQ(rejit_search(m, "abc", &tgt), 1);
+    LIBCUT_TEST_EQ(*tgt, 'c');
+    LIBCUT_TEST_EQ(rejit_search(m, "babc", &tgt), 1);
+    LIBCUT_TEST_EQ(*tgt, 'c');
+    tgt = NULL;
+    LIBCUT_TEST_EQ(rejit_search(m, "b", &tgt), -1);
+    LIBCUT_TEST_EQ((void*)tgt, NULL);
+}
+
 LIBCUT_MAIN(test_chr, test_dot, test_plus, test_star, test_opt, test_begin,
     test_end, test_set, test_or, test_group, test_opt_group, test_star_group,
-    test_plus_group, test_mplus, test_mstar, test_or_mixed)
+    test_plus_group, test_mplus, test_mstar, test_or_mixed,
+
+    test_search)
