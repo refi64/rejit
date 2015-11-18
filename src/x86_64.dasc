@@ -8,21 +8,34 @@
 | .define TMPD0, r12d
 | .define TMPD1, edx
 | .define RET, rax
-| .define TOS, qword [rsp]
+| .define SP, rsp
+| .define TOS, qword [SP]
 | .macro discard
 | add SP, 8
+| .endmacro
+| .macro save
+| mov SAV, STR
+| .endmacro
+| .macro unsave
 | .endmacro
 | .else
 | .arch x86
 | .define STR, edi
-| .define SAV, ecx
+| .define SAV, TOS
 | .define TMPB, dh
 | .define TMPD0, edx
-| .define TMPD1, eax
+| .define TMPD1, ecx
 | .define RET, eax
-| .define TOS, dword [esp]
+| .define SP, esp
+| .define TOS, dword [SP]
 | .macro discard
 | add SP, 4
+| .endmacro
+| .macro save
+| push STR
+| .endmacro
+| .macro unsave
+| discard
 | .endmacro
 | .endif
 | .section code
@@ -35,16 +48,18 @@ static void compile_prolog(dasm_State** Dst) {
     | .if not X64
     | mov STR, [esp+4]
     | .endif
-    | mov SAV, STR
+    | save
     | mov CONST, 1025
 }
 
 static void compile_epilog(dasm_State** Dst) {
     | mov RET, STR
     | sub RET, SAV
+    | unsave
     | ret
     |=>0:
     | mov RET, -1
+    | unsave
     | ret
 }
 

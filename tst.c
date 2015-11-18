@@ -169,8 +169,21 @@ LIBCUT_TEST(test_search) {
     LIBCUT_TEST_EQ((void*)tgt, NULL);
 }
 
+LIBCUT_TEST(test_set_and_dot) {
+    rejit_instruction instrs[] = {{ISET, (intptr_t)"abc"}, {IDOT}, {INULL}};
+        // [abc].
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "ad"), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "bd"), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "cd"), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "c"), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "c\n"), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "\n"), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, ""), -1);
+}
+
 LIBCUT_MAIN(test_chr, test_dot, test_plus, test_star, test_opt, test_begin,
     test_end, test_set, test_or, test_group, test_opt_group, test_star_group,
-    test_plus_group, test_mplus, test_mstar, test_or_mixed,
+    test_plus_group, test_mplus, test_mstar, test_or_mixed, test_set_and_dot,
 
     test_search)
