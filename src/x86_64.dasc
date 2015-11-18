@@ -29,11 +29,14 @@
 | .globals lbl_
 | .actionlist actions
 
+| .define CONST, eax
+
 static void compile_prolog(dasm_State** Dst) {
     | .if not X64
     | mov STR, [esp+4]
     | .endif
     | mov SAV, STR
+    | mov CONST, 1025
 }
 
 static void compile_epilog(dasm_State** Dst) {
@@ -124,11 +127,9 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         *errpc = bk;
         break;
     case IDOT:
-        | mov TMPB, [STR]
-        | cmp TMPB, 10 // newline
-        | je =>*errpc
-        | test TMPB, TMPB // null
-        | je =>*errpc
+        | movzx TMPD0, byte [STR]
+        | bt CONST, TMPD0
+        | jb =>*errpc
         | inc STR
         break;
     case IBEGIN:
