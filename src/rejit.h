@@ -12,19 +12,15 @@ typedef struct rejit_matcher_type {
     int groups;
 }* rejit_matcher;
 
-#ifdef REJIT_INSTR
 typedef enum {
-    INULL, ICHR, IDOT, IBEGIN, IEND,
-    ISET, IARG, ISTAR, IPLUS, IOPT, IMSTAR, IMPLUS, IVARG, IOR, IGROUP,
-    ISKIP
+    RJ_INULL, RJ_ICHR, RJ_IDOT, RJ_IBEGIN, RJ_IEND,
+    RJ_ISET, RJ_IARG, RJ_ISTAR, RJ_IPLUS, RJ_IOPT, RJ_IMSTAR, RJ_IMPLUS, RJ_IVARG, RJ_IOR, RJ_IGROUP,
+    RJ_ISKIP
     // > iarg: following op is argument.
     // > varg: value is rejit_instruction*.
-    // For IGROUP, value points to one past the end of the current group.
-    // For ISET, value is const char*.
+    // For RJ_IGROUP, value points to one past the end of the current group.
+    // For RJ_ISET, value is const char*.
 } rejit_instr_kind;
-#else
-typedef int rejit_instr_kind;
-#endif
 
 typedef struct rejit_instruction_type {
     rejit_instr_kind kind;

@@ -29,18 +29,18 @@ static unsigned long genmagic(const char* s, char* min) {
 
 static void unskip(rejit_instruction* instr) {
     rejit_instruction* i;
-    if (instr->kind > ISKIP) instr->kind -= ISKIP;
-    if (instr->kind == IGROUP)
+    if (instr->kind > RJ_ISKIP) instr->kind -= RJ_ISKIP;
+    if (instr->kind == RJ_IGROUP)
         for (i = (rejit_instruction*)instr++->value; instr != i; ++instr)
             unskip(instr);
     else {
-        if (instr->kind > IVARG) unskip((rejit_instruction*)instr->value);
-        if (instr->kind > IARG) unskip(instr+1);
+        if (instr->kind > RJ_IVARG) unskip((rejit_instruction*)instr->value);
+        if (instr->kind > RJ_IARG) unskip(instr+1);
     }
 }
 
 static void skip(rejit_instruction* instr) {
-    if (instr->kind < ISKIP) instr->kind += ISKIP;
+    if (instr->kind < RJ_ISKIP) instr->kind += RJ_ISKIP;
 }
 
 #include "codegen.c"

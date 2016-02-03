@@ -27,9 +27,9 @@ rejit_parse_result rejit_parse(const char* str, int* err) {
         }
         // word now points to the length of the current text.
         if (SPECIAL(str[word])) ++instc;
-        /*     res.instrs[instc++] = {IBEGIN+(special-SPECIAL(str[word]))}; */
+        /*     res.instrs[instc++] = {RJ_IBEGIN+(special-SPECIAL(str[word]))}; */
         for (i=0; i < word; ++i) {
-            res.instrs[instc].kind = ICHR;
+            res.instrs[instc].kind = RJ_ICHR;
             res.instrs[instc].value = 0;
             ++instc;
         }

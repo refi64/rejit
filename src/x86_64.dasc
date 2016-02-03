@@ -69,30 +69,30 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     unsigned long magic;
     char min;
     int ebk = *errpc, bk;
-    if (instr->kind > ISKIP) return;
+    if (instr->kind > RJ_ISKIP) return;
     switch (instr->kind) {
-    case ISKIP: printf("ISKIP was added to INULL\n"); abort();
-    case ICHR:
+    case RJ_ISKIP: printf("RJ_ISKIP was added to RJ_INULL\n"); abort();
+    case RJ_ICHR:
         | cmp byte [STR], instr->value
         | jne =>*errpc
         | inc STR
         break;
-    case ISTAR:
-    case IPLUS:
-    case IOPT:
+    case RJ_ISTAR:
+    case RJ_IPLUS:
+    case RJ_IOPT:
         ia = instr+1;
-        if (instr->kind == IPLUS) compile_one(Dst, ia, errpc, pcl);
+        if (instr->kind == RJ_IPLUS) compile_one(Dst, ia, errpc, pcl);
         | push STR
         *errpc = *pcl;
         GROW;
         bk = *pcl;
         GROW;
-        if (instr->kind != IOPT)
+        if (instr->kind != RJ_IOPT)
             |=>bk:
-        if (instr->kind == IPLUS) unskip(ia);
+        if (instr->kind == RJ_IPLUS) unskip(ia);
         compile_one(Dst, ia, errpc, pcl);
         /*
-           XXX: For IOPT, this will basically generate:
+           XXX: For RJ_IOPT, this will basically generate:
 
            mov TOS, STR
            errpc:
@@ -117,7 +117,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
            current code. I need to benchmark it a bit more.
         */
         | mov TOS, STR
-        if (instr->kind != IOPT) {
+        if (instr->kind != RJ_IOPT) {
             // Without the braces here, DynAsm generates incorrect code.
             | jmp =>bk
         }
@@ -125,37 +125,37 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | pop STR
         skip(ia);
         break;
-    case IMSTAR:
-    case IMPLUS:
+    case RJ_IMSTAR:
+    case RJ_IMPLUS:
         ia = instr+1;
         bk = *pcl;
         GROW;
-        if (instr->kind == IMSTAR) {
+        if (instr->kind == RJ_IMSTAR) {
             GROW;
             | jmp =>bk+1
         }
         |=>bk:
         compile_one(Dst, ia, errpc, pcl);
         skip(ia);
-        if (instr->kind == IMSTAR)
+        if (instr->kind == RJ_IMSTAR)
             |=>bk+1:
         *errpc = bk;
         break;
-    case IDOT:
+    case RJ_IDOT:
         | movzx TMPD0, byte [STR]
         | bt CONST, TMPD0
         | jb =>*errpc
         | inc STR
         break;
-    case IBEGIN:
+    case RJ_IBEGIN:
         | cmp SAV, STR
         | jne =>*errpc
         break;
-    case IEND:
+    case RJ_IEND:
         | cmp byte [STR], 0
         | jne =>*errpc
         break;
-    case ISET:
+    case RJ_ISET:
         magic = genmagic((const char*)instr->value, &min);
         | mov TMPD0, magic
         | movzx TMPD1, byte [STR]
@@ -165,7 +165,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | jae =>*errpc
         | inc STR
         break;
-    case IOR:
+    case RJ_IOR:
         ia = instr+1;
         ib = (rejit_instruction*)instr->value;
         *errpc = *pcl;
@@ -181,7 +181,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         skip(ib);
         |=>bk:
         break;
-    case IGROUP:
+    case RJ_IGROUP:
         for (ia = (rejit_instruction*)instr++->value; instr != ia; ++instr) {
             compile_one(Dst, instr, errpc, pcl);
             skip(instr);
@@ -189,5 +189,5 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         break;
     default: printf("unrecognized opcode: %d\n", instr->kind); abort();
     };
-    if (instr->kind != IMSTAR && instr->kind != IMPLUS) *errpc = ebk;
+    if (instr->kind != RJ_IMSTAR && instr->kind != RJ_IMPLUS) *errpc = ebk;
 }

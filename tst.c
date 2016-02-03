@@ -1,9 +1,8 @@
 #include <libcut.h>
-#define REJIT_INSTR
 #include "rejit.h"
 
 LIBCUT_TEST(test_chr) {
-    rejit_instruction instrs[] = {{ICHR, 'c'}, {ICHR, 'a'}, {INULL}}; // ca
+    rejit_instruction instrs[] = {{RJ_ICHR, 'c'}, {RJ_ICHR, 'a'}, {RJ_INULL}}; // ca
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "ca"), 2);
     LIBCUT_TEST_EQ(rejit_match(m, ""), -1);
@@ -13,7 +12,7 @@ LIBCUT_TEST(test_chr) {
 }
 
 LIBCUT_TEST(test_dot) {
-    rejit_instruction instrs[] = {{IDOT}, {INULL}}; // .
+    rejit_instruction instrs[] = {{RJ_IDOT}, {RJ_INULL}}; // .
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "c"), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "a"), 1);
@@ -22,7 +21,7 @@ LIBCUT_TEST(test_dot) {
 }
 
 LIBCUT_TEST(test_plus) {
-    rejit_instruction instrs[] = {{IPLUS}, {ICHR, 'c'}, {INULL}}; // c+
+    rejit_instruction instrs[] = {{RJ_IPLUS}, {RJ_ICHR, 'c'}, {RJ_INULL}}; // c+
     instrs[0].value = (intptr_t)&instrs[1];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "c"), 1);
@@ -31,7 +30,7 @@ LIBCUT_TEST(test_plus) {
 }
 
 LIBCUT_TEST(test_star) {
-    rejit_instruction instrs[] = {{ISTAR}, {ICHR, 'c'}, {INULL}}; // c*
+    rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_ICHR, 'c'}, {RJ_INULL}}; // c*
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "c"), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "a"), 0);
@@ -40,8 +39,8 @@ LIBCUT_TEST(test_star) {
 }
 
 LIBCUT_TEST(test_opt) {
-    rejit_instruction instrs[] = {{ICHR, 'a'}, {IOPT}, {ICHR, 'c'}, {IEND},
-        {INULL}}; // ac?$
+    rejit_instruction instrs[] = {{RJ_ICHR, 'a'}, {RJ_IOPT}, {RJ_ICHR, 'c'}, {RJ_IEND},
+        {RJ_INULL}}; // ac?$
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "ac"), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "a"), 1);
@@ -50,21 +49,21 @@ LIBCUT_TEST(test_opt) {
 }
 
 LIBCUT_TEST(test_begin) {
-    rejit_instruction instrs[] = {{ISTAR}, {ICHR, 'c'}, {IBEGIN}, {INULL}}; // c*^
+    rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_ICHR, 'c'}, {RJ_IBEGIN}, {RJ_INULL}}; // c*^
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, ""), 0);
     LIBCUT_TEST_EQ(rejit_match(m, "c"), -1);
 }
 
 LIBCUT_TEST(test_end) {
-    rejit_instruction instrs[] = {{IEND}, {INULL}}; // $
+    rejit_instruction instrs[] = {{RJ_IEND}, {RJ_INULL}}; // $
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, ""), 0);
     LIBCUT_TEST_EQ(rejit_match(m, "c"), -1);
 }
 
 LIBCUT_TEST(test_set) {
-    rejit_instruction instrs[] = {{ISET, (intptr_t)"xyz"}, {INULL}}; // [xyz]
+    rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)"xyz"}, {RJ_INULL}}; // [xyz]
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "x"), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "y"), 1);
@@ -74,7 +73,7 @@ LIBCUT_TEST(test_set) {
 }
 
 LIBCUT_TEST(test_or) {
-    rejit_instruction instrs[] = {{IOR}, {ICHR, 'a'}, {ICHR, 'b'}, {INULL}};
+    rejit_instruction instrs[] = {{RJ_IOR}, {RJ_ICHR, 'a'}, {RJ_ICHR, 'b'}, {RJ_INULL}};
         // a|b
     instrs[0].value = (intptr_t)&instrs[2];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
@@ -84,7 +83,7 @@ LIBCUT_TEST(test_or) {
 }
 
 LIBCUT_TEST(test_group) {
-    rejit_instruction instrs[] = {{IGROUP}, {ICHR, 'a'}, {INULL}}; // (a)
+    rejit_instruction instrs[] = {{RJ_IGROUP}, {RJ_ICHR, 'a'}, {RJ_INULL}}; // (a)
     instrs[0].value = (intptr_t)&instrs[2];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "a"), 1);
@@ -92,8 +91,8 @@ LIBCUT_TEST(test_group) {
 }
 
 LIBCUT_TEST(test_opt_group) {
-    rejit_instruction instrs[] = {{IOPT}, {IGROUP}, {ICHR, 'a'}, {ICHR, 'b'},
-        {INULL}}; // (ab)?
+    rejit_instruction instrs[] = {{RJ_IOPT}, {RJ_IGROUP}, {RJ_ICHR, 'a'}, {RJ_ICHR, 'b'},
+        {RJ_INULL}}; // (ab)?
     instrs[1].value = (intptr_t)&instrs[4];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "ab"), 2);
@@ -103,8 +102,8 @@ LIBCUT_TEST(test_opt_group) {
 }
 
 LIBCUT_TEST(test_star_group) {
-    rejit_instruction instrs[] = {{ISTAR}, {IGROUP}, {ICHR, 'a'}, {ICHR, 'b'},
-        {INULL}}; // (ab)*
+    rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_IGROUP}, {RJ_ICHR, 'a'}, {RJ_ICHR, 'b'},
+        {RJ_INULL}}; // (ab)*
     instrs[1].value = (intptr_t)&instrs[4];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "ab"), 2);
@@ -116,8 +115,8 @@ LIBCUT_TEST(test_star_group) {
 }
 
 LIBCUT_TEST(test_plus_group) {
-    rejit_instruction instrs[] = {{IPLUS}, {IGROUP}, {ICHR, 'a'}, {ICHR, 'b'},
-        {INULL}}; // (ab)+
+    rejit_instruction instrs[] = {{RJ_IPLUS}, {RJ_IGROUP}, {RJ_ICHR, 'a'}, {RJ_ICHR, 'b'},
+        {RJ_INULL}}; // (ab)+
     instrs[1].value = (intptr_t)&instrs[4];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "ab"), 2);
@@ -129,7 +128,7 @@ LIBCUT_TEST(test_plus_group) {
 }
 
 LIBCUT_TEST(test_mplus) {
-    rejit_instruction instrs[] = {{IMPLUS}, {IDOT}, {ICHR, 'b'}, {INULL}}; // .+?b
+    rejit_instruction instrs[] = {{RJ_IMPLUS}, {RJ_IDOT}, {RJ_ICHR, 'b'}, {RJ_INULL}}; // .+?b
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "abcb"), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "b"), -1);
@@ -138,7 +137,7 @@ LIBCUT_TEST(test_mplus) {
 }
 
 LIBCUT_TEST(test_mstar) {
-    rejit_instruction instrs[] = {{IMSTAR}, {IDOT}, {ICHR, 'b'}, {INULL}}; // .*?b
+    rejit_instruction instrs[] = {{RJ_IMSTAR}, {RJ_IDOT}, {RJ_ICHR, 'b'}, {RJ_INULL}}; // .*?b
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "abcb"), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "b"), 1);
@@ -147,8 +146,8 @@ LIBCUT_TEST(test_mstar) {
 }
 
 LIBCUT_TEST(test_or_mixed) {
-    rejit_instruction instrs[] = {{IOR}, {ICHR, 'b'}, {ISTAR}, {ICHR, 'a'},
-        {INULL}}; // (b|a*)
+    rejit_instruction instrs[] = {{RJ_IOR}, {RJ_ICHR, 'b'}, {RJ_ISTAR}, {RJ_ICHR, 'a'},
+        {RJ_INULL}}; // (b|a*)
     instrs[0].value = (intptr_t)&instrs[2];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "aaaa"), 4);
@@ -157,7 +156,7 @@ LIBCUT_TEST(test_or_mixed) {
 }
 
 LIBCUT_TEST(test_search) {
-    rejit_instruction instrs[] = {{ICHR, 'a'}, {INULL}}; // a
+    rejit_instruction instrs[] = {{RJ_ICHR, 'a'}, {RJ_INULL}}; // a
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     const char* tgt;
     LIBCUT_TEST_EQ(rejit_search(m, "abc", &tgt), 1);
@@ -170,7 +169,7 @@ LIBCUT_TEST(test_search) {
 }
 
 LIBCUT_TEST(test_set_and_dot) {
-    rejit_instruction instrs[] = {{ISET, (intptr_t)"abc"}, {IDOT}, {INULL}};
+    rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)"abc"}, {RJ_IDOT}, {RJ_INULL}};
         // [abc].
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "ad"), 2);
