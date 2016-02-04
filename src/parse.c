@@ -5,36 +5,82 @@
 #include <string.h>
 #include <stdio.h>
 
-rejit_parse_result rejit_parse(const char* str, int* err) {
-    rejit_parse_result res;
-    // XXX: This is a rough estimate that may waste memory!
-    size_t instc=0;
-    res.instrs = malloc(strlen(str));
-    if (!res.instrs) { puts("memory error"); abort(); }
-    res.groups = 0;
-    // XXX: This order is insanely important!
-    const char special[] = "^$^*+?";
-    #define SPECIAL(c) (memchr(special, sizeof(special)/sizeof(char), (c)))
+#define ALLOC(tgt,sz,f) do {\
+    (tgt) = malloc(sz);\
+    if ((tgt) == NULL) f;\
+\} while (0)
+
+#define REALLOC(tgt,sz,f) do {\
+    void* realloc_r = realloc((tgt), (sz));\
+    if (realloc_r == NULL) {\
+        free((tgt));\
+        f;\
+    } else (tgt) = realloc_r;\
+} while (0)
+
+typedef rejit_parse_error E;
+typedef rejit_token T;
+
+rejit_token_list rejit_tokenize(const char* str, E* err) {
+    const char* start = str;
+    rejit_token_list tokens;
+    int escaped = 0;
+    rejit_token token;
+
+    tokens.tokens = NULL;
+    tokens.len = 0;
+
     while (*str) {
-        size_t word=0, i;
-        for (;;) {
-            if (str[word] == '\\') {
-                word += 2;
-                if (!word) { *err = 1; return res; }
-            }
-            else if (SPECIAL(str[word])) break;
-            else ++word;
+        int tkind = RJ_TWORD;
+
+        if (escaped) escaped = 0;
+        else switch (*str) {
+        #define K(c,k) case c: tkind = RJ_T##k; break;
+        K('+', PLUS)
+        K('*', STAR)
+        K('?', Q)
+        K('(', LP)
+        K(')', RP)
+        K('[', LK)
+        K(']', RK)
+        case '\\': escaped = 1; break;
+        default: break;
         }
-        // word now points to the length of the current text.
-        if (SPECIAL(str[word])) ++instc;
-        /*     res.instrs[instc++] = {RJ_IBEGIN+(special-SPECIAL(str[word]))}; */
-        for (i=0; i < word; ++i) {
-            res.instrs[instc].kind = RJ_ICHR;
-            res.instrs[instc].value = 0;
-            ++instc;
+
+        token.kind = tkind;
+        token.pos = str;
+        token.len = 1;
+        ++str;
+
+        #define PREV (tokens.tokens[tokens.len-1])
+
+        if (token.kind == RJ_TWORD && tokens.tokens && PREV.kind == RJ_TWORD)
+            // Merge successive TWORDs.
+            ++PREV.len;
+        else {
+            REALLOC(tokens.tokens, sizeof(rejit_token)*(++tokens.len), {
+                err->kind = RJ_PE_MEM;
+                err->pos = str-start;
+                return tokens;
+            });
+            PREV = token;
         }
     }
-    *err = 0;
+
+    return tokens;
+}
+
+rejit_parse_result rejit_parse(const char* str, E* err) {
+    rejit_parse_result res;
+    rejit_token_list tokens;
+    res.instrs = NULL;
+    res.groups = 0;
+
+    err->kind = RJ_PE_NONE;
+    err->pos = 0;
+
+    tokens = rejit_tokenize(str, err);
+    if (err->kind != RJ_PE_NONE) return res;
     return res;
 }
 

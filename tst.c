@@ -1,6 +1,49 @@
 #include <libcut.h>
 #include "rejit.h"
 
+LIBCUT_TEST(test_tokenize) {
+    rejit_parse_error err;
+    err.kind = RJ_PE_NONE;
+    err.pos = 0;
+    const char s[] = "A(bC)*+?d\\+e";
+    rejit_token_list tokens = rejit_tokenize(s, &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+
+    LIBCUT_TEST_EQ(tokens.len, 8);
+
+    LIBCUT_TEST_EQ(tokens.tokens[0].kind, RJ_TWORD);
+    LIBCUT_TEST_EQ(tokens.tokens[0].pos, (char*)s);
+    LIBCUT_TEST_EQ(tokens.tokens[0].len, 1);
+
+    LIBCUT_TEST_EQ(tokens.tokens[1].kind, RJ_TLP);
+    LIBCUT_TEST_EQ(tokens.tokens[1].pos, s+1);
+    LIBCUT_TEST_EQ(tokens.tokens[1].len, 1);
+
+    LIBCUT_TEST_EQ(tokens.tokens[2].kind, RJ_TWORD);
+    LIBCUT_TEST_EQ(tokens.tokens[2].pos, s+2);
+    LIBCUT_TEST_EQ(tokens.tokens[2].len, 2);
+
+    LIBCUT_TEST_EQ(tokens.tokens[3].kind, RJ_TRP);
+    LIBCUT_TEST_EQ(tokens.tokens[3].pos, s+4);
+    LIBCUT_TEST_EQ(tokens.tokens[3].len, 1);
+
+    LIBCUT_TEST_EQ(tokens.tokens[4].kind, RJ_TSTAR);
+    LIBCUT_TEST_EQ(tokens.tokens[4].pos, s+5);
+    LIBCUT_TEST_EQ(tokens.tokens[4].len, 1);
+
+    LIBCUT_TEST_EQ(tokens.tokens[5].kind, RJ_TPLUS);
+    LIBCUT_TEST_EQ(tokens.tokens[5].pos, s+6);
+    LIBCUT_TEST_EQ(tokens.tokens[5].len, 1);
+
+    LIBCUT_TEST_EQ(tokens.tokens[6].kind, RJ_TQ);
+    LIBCUT_TEST_EQ(tokens.tokens[6].pos, s+7);
+    LIBCUT_TEST_EQ(tokens.tokens[6].len, 1);
+
+    LIBCUT_TEST_EQ(tokens.tokens[7].kind, RJ_TWORD);
+    LIBCUT_TEST_EQ(tokens.tokens[7].pos, s+8);
+    LIBCUT_TEST_EQ(tokens.tokens[7].len, 4);
+}
+
 LIBCUT_TEST(test_chr) {
     rejit_instruction instrs[] = {{RJ_ICHR, 'c'}, {RJ_ICHR, 'a'}, {RJ_INULL}}; // ca
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
@@ -181,7 +224,7 @@ LIBCUT_TEST(test_set_and_dot) {
     LIBCUT_TEST_EQ(rejit_match(m, ""), -1);
 }
 
-LIBCUT_MAIN(test_chr, test_dot, test_plus, test_star, test_opt, test_begin,
+LIBCUT_MAIN(test_tokenize, test_chr, test_dot, test_plus, test_star, test_opt, test_begin,
     test_end, test_set, test_or, test_group, test_opt_group, test_star_group,
     test_plus_group, test_mplus, test_mstar, test_or_mixed, test_set_and_dot,
 
