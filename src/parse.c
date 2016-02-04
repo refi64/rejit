@@ -70,6 +70,8 @@ rejit_token_list rejit_tokenize(const char* str, E* err) {
     return tokens;
 }
 
+void rejit_free_tokens(rejit_token_list tokens) { free(tokens.tokens); }
+
 rejit_parse_result rejit_parse(const char* str, E* err) {
     rejit_parse_result res;
     rejit_token_list tokens;
