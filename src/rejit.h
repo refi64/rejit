@@ -29,7 +29,9 @@ typedef struct rejit_instruction_type {
 
 typedef struct rejit_token_type {
     enum {
-        RJ_TWORD, RJ_TPLUS, RJ_TSTAR, RJ_TQ, RJ_TLP, RJ_TRP, RJ_TLK, RJ_TRK
+        RJ_TWORD, RJ_TLP, RJ_TRP, RJ_TLK, RJ_TRK,
+        RJ_TSUF,
+        RJ_TPLUS, RJ_TSTAR, RJ_TQ,
     } kind;
     const char* pos;
     size_t len;
@@ -49,6 +51,7 @@ typedef struct rejit_parse_error_type {
     enum {
         RJ_PE_NONE,   // Successful parse/no error.
         RJ_PE_SYNTAX, // Syntax error.
+        RJ_PE_OVFLOW, // Stack overflow (too many nested parens).
         RJ_PE_MEM,    // Out of memory.
     } kind;
     size_t pos;
