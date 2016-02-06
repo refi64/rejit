@@ -115,12 +115,12 @@ static void build_suffix_list(const char* str, rejit_token_list tokens,
 
 static void parse(const char* str, rejit_token_list tokens, size_t* suffixes,
                   rejit_parse_result* res, E* err) {
-    ALLOC(res->instrs, sizeof(rejit_instruction)*tokens.len+1, {
+    size_t i, j, ninstrs = 0;
+    ALLOC(res->instrs, sizeof(rejit_instruction)*(strlen(str)+1), {
         err->kind = RJ_PE_MEM;
         err->pos = 0;
         return;
     });
-    size_t i, j, ninstrs = 0;
 
     #define CUR res->instrs[ninstrs]
 
@@ -138,6 +138,8 @@ static void parse(const char* str, rejit_token_list tokens, size_t* suffixes,
         default: abort();
         }
     }
+
+    CUR.kind = RJ_INULL;
 }
 
 rejit_parse_result rejit_parse(const char* str, E* err) {

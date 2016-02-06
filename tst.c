@@ -44,6 +44,21 @@ LIBCUT_TEST(test_tokenize) {
     LIBCUT_TEST_EQ(tokens.tokens[7].len, 4);
 }
 
+LIBCUT_TEST(test_parse) {
+    rejit_parse_error err;
+    rejit_parse_result res = rejit_parse("ab", &err);
+
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ICHR);
+    LIBCUT_TEST_EQ(res.instrs[0].value, 'a');
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_ICHR);
+    LIBCUT_TEST_EQ(res.instrs[1].value, 'b');
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
+}
+
 LIBCUT_TEST(test_chr) {
     // ca
     rejit_instruction instrs[] = {{RJ_ICHR, 'c'}, {RJ_ICHR, 'a'}, {RJ_INULL}};
@@ -246,7 +261,7 @@ LIBCUT_TEST(test_set_and_dot) {
 }
 
 LIBCUT_MAIN(
-    test_tokenize,
+    test_tokenize, test_parse,
 
     test_chr, test_dot, test_plus, test_star, test_opt, test_begin, test_end,
     test_set, test_or, test_group, test_opt_group, test_star_group,
