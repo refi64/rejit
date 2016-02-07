@@ -44,12 +44,11 @@ LIBCUT_TEST(test_tokenize) {
     LIBCUT_TEST_EQ(tokens.tokens[7].len, 4);
 }
 
-#define PARSE(s)\
-    rejit_parse_error err;\
-    rejit_parse_result res = rejit_parse(s, &err);\
-    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);\
+#define PARSE(s) res = rejit_parse(s, &err); LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
 
 LIBCUT_TEST(test_parse_word) {
+    rejit_parse_error err;
+    rejit_parse_result res;
     PARSE("ab")
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ICHR);
@@ -62,6 +61,8 @@ LIBCUT_TEST(test_parse_word) {
 }
 
 LIBCUT_TEST(test_parse_suffix) {
+    rejit_parse_error err;
+    rejit_parse_result res;
     PARSE("ab+")
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IPLUS);
