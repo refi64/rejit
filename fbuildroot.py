@@ -53,7 +53,7 @@ def get_target_arch(ctx, c):
 
 @fbuild.db.caches
 def configure(ctx):
-    flags = ['-Wall']+ctx.options.cflag
+    flags = ['-Wall', '-Werror']+ctx.options.cflag
     testflags = []
     defs = []
     if ctx.options.use_color:
