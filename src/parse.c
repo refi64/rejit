@@ -103,8 +103,8 @@ static void build_suffix_list(const char* str, rejit_token_list tokens,
         if (t.kind == RJ_TLP) PUSH(st, i);
         else if (t.kind == RJ_TRP) prev = POP(st);
         else if (t.kind > RJ_TSUF) {
-            if (t.kind == RJ_TQ) continue;
-            else if (prev == -1) {
+            if (prev == -1) {
+                if (t.kind == RJ_TQ) continue;
                 err->kind = RJ_PE_SYNTAX;
                 err->pos = t.pos - str;
                 return;
@@ -159,7 +159,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 err->pos = t.pos - str;
                 return;
             }
-            POP(st)->value = (intptr_t)(&CUR+1);
+            POP(st)->value = (intptr_t)&CUR;
             break;
         default:
             assert(t.kind > RJ_TSUF);
