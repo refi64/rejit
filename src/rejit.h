@@ -31,7 +31,7 @@ typedef struct rejit_token_type {
     enum {
         RJ_TWORD, RJ_TLP, RJ_TRP, RJ_TLK, RJ_TRK,
         RJ_TSUF,
-        RJ_TPLUS, RJ_TSTAR, RJ_TQ,
+        RJ_TSTAR, RJ_TPLUS, RJ_TQ,
     } kind;
     const char* pos;
     size_t len;

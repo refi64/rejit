@@ -91,9 +91,12 @@ void rejit_free_tokens(rejit_token_list tokens) { free(tokens.tokens); }
 #define TOS(st) (st.stack[st.len-1])
 
 static void build_suffix_list(const char* str, rejit_token_list tokens,
-                              size_t* suffixes, E* err) {
+                              long* suffixes, E* err) {
     size_t i, prev = -1;
     STACK(size_t) st;
+
+    for (i=0; i<tokens.len; ++i) suffixes[i] = -1;
+
     for (i=0; i<tokens.len; ++i) {
         rejit_token t = tokens.tokens[i];
         if (t.kind == RJ_TLP) PUSH(st, i);
@@ -106,14 +109,11 @@ static void build_suffix_list(const char* str, rejit_token_list tokens,
             }
             suffixes[prev] = i;
             prev = -1;
-        } else {
-            suffixes[i] = -1;
-            prev = i;
-        }
+        } else prev = i;
     }
 }
 
-static void parse(const char* str, rejit_token_list tokens, size_t* suffixes,
+static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   rejit_parse_result* res, E* err) {
     size_t i, j, ninstrs = 0;
     ALLOC(res->instrs, sizeof(rejit_instruction)*(strlen(str)+1), {
@@ -127,6 +127,11 @@ static void parse(const char* str, rejit_token_list tokens, size_t* suffixes,
     for (i=0; i<tokens.len; ++i) {
         rejit_token t = tokens.tokens[i];
 
+        if (suffixes[i] != -1) {
+            CUR.kind = tokens.tokens[suffixes[i]].kind - RJ_TSTAR + RJ_ISTAR;
+            ++ninstrs;
+        }
+
         switch (t.kind) {
         case RJ_TWORD:
             for (j=0; j<t.len; ++j) {
@@ -135,7 +140,8 @@ static void parse(const char* str, rejit_token_list tokens, size_t* suffixes,
                 ++ninstrs;
             }
             break;
-        default: abort();
+        default:
+            assert(t.kind > RJ_TSUF);
         }
     }
 
@@ -145,7 +151,7 @@ static void parse(const char* str, rejit_token_list tokens, size_t* suffixes,
 rejit_parse_result rejit_parse(const char* str, E* err) {
     STACK(size_t) st;
     st.len = 0;
-    size_t* suffixes;
+    long* suffixes;
 
     rejit_parse_result res;
     rejit_token_list tokens;
@@ -158,7 +164,7 @@ rejit_parse_result rejit_parse(const char* str, E* err) {
     tokens = rejit_tokenize(str, err);
     if (err->kind != RJ_PE_NONE) return res;
 
-    ALLOC(suffixes, sizeof(size_t)*tokens.len, {
+    ALLOC(suffixes, sizeof(long)*tokens.len, {
         err->kind = RJ_PE_MEM;
         err->pos = 0;
         return res;
