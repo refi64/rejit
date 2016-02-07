@@ -86,6 +86,10 @@ LIBCUT_TEST(test_parse_suffix) {
     LIBCUT_TEST_EQ(res.instrs[2].value, 'b');
 
     LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_INULL);
+
+    rejit_parse("+", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_SYNTAX);
+    LIBCUT_TEST_EQ(err.pos, 0);
 }
 
 LIBCUT_TEST(test_parse_group) {
@@ -105,6 +109,14 @@ LIBCUT_TEST(test_parse_group) {
     LIBCUT_TEST_EQ(res.instrs[3].value, 'b');
 
     LIBCUT_TEST_EQ(res.instrs[4].kind, RJ_INULL);
+
+    rejit_parse("((a)", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_UBOUND);
+    LIBCUT_TEST_EQ(err.pos, 4);
+
+    rejit_parse("(a))b", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_UBOUND);
+    LIBCUT_TEST_EQ(err.pos, 3);
 }
 
 LIBCUT_TEST(test_chr) {
