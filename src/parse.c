@@ -102,7 +102,8 @@ static void build_suffix_list(const char* str, rejit_token_list tokens,
         if (t.kind == RJ_TLP) PUSH(st, i);
         else if (t.kind == RJ_TRP) prev = POP(st);
         else if (t.kind > RJ_TSUF) {
-            if (prev == -1) {
+            if (t.kind == RJ_TQ) continue;
+            else if (prev == -1) {
                 err->kind = RJ_PE_SYNTAX;
                 err->pos = t.pos - str;
                 return;
@@ -129,6 +130,9 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
 
         if (suffixes[i] != -1) {
             CUR.kind = tokens.tokens[suffixes[i]].kind - RJ_TSTAR + RJ_ISTAR;
+            if (suffixes[i]+1 < tokens.len &&
+                tokens.tokens[suffixes[i]+1].kind == RJ_TQ && CUR.kind != RJ_IOPT)
+                CUR.kind += RJ_IMSTAR - RJ_ISTAR;
             ++ninstrs;
         }
 

@@ -74,6 +74,18 @@ LIBCUT_TEST(test_parse_suffix) {
     LIBCUT_TEST_EQ(res.instrs[2].value, 'b');
 
     LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_INULL);
+
+    PARSE("ab+?")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IMPLUS);
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_ICHR);
+    LIBCUT_TEST_EQ(res.instrs[1].value, 'a');
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_ICHR);
+    LIBCUT_TEST_EQ(res.instrs[2].value, 'b');
+
+    LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_INULL);
 }
 
 LIBCUT_TEST(test_chr) {
