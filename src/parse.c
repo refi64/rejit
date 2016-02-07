@@ -94,6 +94,7 @@ static void build_suffix_list(const char* str, rejit_token_list tokens,
                               long* suffixes, E* err) {
     size_t i, prev = -1;
     STACK(size_t) st;
+    st.len = 0;
 
     for (i=0; i<tokens.len; ++i) suffixes[i] = -1;
 
@@ -116,8 +117,11 @@ static void build_suffix_list(const char* str, rejit_token_list tokens,
 
 static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   rejit_parse_result* res, E* err) {
-    size_t i, j, ninstrs = 0;
-    ALLOC(res->instrs, sizeof(rejit_instruction)*(strlen(str)+1), {
+    size_t i, j, ninstrs = 0, sl;
+    STACK(rejit_instruction*) st;
+    st.len = 0;
+    sl = strlen(str);
+    ALLOC(res->instrs, sizeof(rejit_instruction)*(sl+1), {
         err->kind = RJ_PE_MEM;
         err->pos = 0;
         return;
@@ -144,12 +148,30 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 ++ninstrs;
             }
             break;
+        case RJ_TLP:
+            CUR.kind = RJ_IGROUP;
+            PUSH(st, &CUR);
+            ++ninstrs;
+            break;
+        case RJ_TRP:
+            if (st.len == 0) {
+                err->kind = RJ_PE_UBOUND;
+                err->pos = t.pos - str;
+                return;
+            }
+            POP(st)->value = (intptr_t)(&CUR+1);
+            break;
         default:
             assert(t.kind > RJ_TSUF);
         }
     }
 
     CUR.kind = RJ_INULL;
+
+    if (st.len != 0) {
+        err->kind = RJ_PE_UBOUND;
+        err->pos = sl;
+    }
 }
 
 rejit_parse_result rejit_parse(const char* str, E* err) {

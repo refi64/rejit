@@ -51,6 +51,7 @@ typedef struct rejit_parse_error_type {
     enum {
         RJ_PE_NONE,   // Successful parse/no error.
         RJ_PE_SYNTAX, // Syntax error.
+        RJ_PE_UBOUND, // Unbound parenthesis.
         RJ_PE_OVFLOW, // Stack overflow (too many nested parens).
         RJ_PE_MEM,    // Out of memory.
     } kind;
