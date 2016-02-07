@@ -40,6 +40,9 @@ rejit_token_list rejit_tokenize(const char* str, E* err) {
         K('+', PLUS)
         K('*', STAR)
         K('?', Q)
+        K('^', CARET)
+        K('$', DOLLAR)
+        K('.', DOT)
         K('(', LP)
         K(')', RP)
         K('[', LK)
@@ -147,6 +150,14 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 CUR.value = t.pos[j];
                 ++ninstrs;
             }
+            break;
+        case RJ_TCARET: case RJ_TDOLLAR:
+            CUR.kind = RJ_IEND - (RJ_TDOLLAR - t.kind);
+            ++ninstrs;
+            break;
+        case RJ_TDOT:
+            CUR.kind = RJ_IDOT;
+            ++ninstrs;
             break;
         case RJ_TLP:
             CUR.kind = RJ_IGROUP;
