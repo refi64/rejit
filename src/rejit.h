@@ -29,7 +29,7 @@ typedef struct rejit_instruction_type {
 
 typedef struct rejit_token_type {
     enum {
-        RJ_TWORD, RJ_TCARET, RJ_TDOLLAR, RJ_TDOT, RJ_TLP, RJ_TRP, RJ_TLK, RJ_TRK,
+        RJ_TWORD, RJ_TCARET, RJ_TDOLLAR, RJ_TDOT, RJ_TLP, RJ_TRP, RJ_TSET,
         RJ_TSUF,
         RJ_TSTAR, RJ_TPLUS, RJ_TQ,
     } kind;
@@ -51,7 +51,7 @@ typedef struct rejit_parse_error_type {
     enum {
         RJ_PE_NONE,   // Successful parse/no error.
         RJ_PE_SYNTAX, // Syntax error.
-        RJ_PE_UBOUND, // Unbound parenthesis.
+        RJ_PE_UBOUND, // Unbound parenthesis or bracket.
         RJ_PE_OVFLOW, // Stack overflow (too many nested parens).
         RJ_PE_MEM,    // Out of memory.
     } kind;

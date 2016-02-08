@@ -5,11 +5,11 @@ LIBCUT_TEST(test_tokenize) {
     rejit_parse_error err;
     err.kind = RJ_PE_NONE;
     err.pos = 0;
-    const char s[] = "A(bC)*+?d\\+e";
+    const char s[] = "A(bC)*+?[abc]d\\+e";
     rejit_token_list tokens = rejit_tokenize(s, &err);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
 
-    LIBCUT_TEST_EQ(tokens.len, 8);
+    LIBCUT_TEST_EQ(tokens.len, 9);
 
     LIBCUT_TEST_EQ(tokens.tokens[0].kind, RJ_TWORD);
     LIBCUT_TEST_EQ(tokens.tokens[0].pos, (char*)s);
@@ -39,9 +39,13 @@ LIBCUT_TEST(test_tokenize) {
     LIBCUT_TEST_EQ(tokens.tokens[6].pos, s+7);
     LIBCUT_TEST_EQ(tokens.tokens[6].len, 1);
 
-    LIBCUT_TEST_EQ(tokens.tokens[7].kind, RJ_TWORD);
+    LIBCUT_TEST_EQ(tokens.tokens[7].kind, RJ_TSET);
     LIBCUT_TEST_EQ(tokens.tokens[7].pos, s+8);
-    LIBCUT_TEST_EQ(tokens.tokens[7].len, 4);
+    LIBCUT_TEST_EQ(tokens.tokens[7].len, 5);
+
+    LIBCUT_TEST_EQ(tokens.tokens[8].kind, RJ_TWORD);
+    LIBCUT_TEST_EQ(tokens.tokens[8].pos, s+13);
+    LIBCUT_TEST_EQ(tokens.tokens[8].len, 4);
 }
 
 #define PARSE(s) res = rejit_parse(s, &err); LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);

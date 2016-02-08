@@ -25,7 +25,7 @@ typedef rejit_token T;
 rejit_token_list rejit_tokenize(const char* str, E* err) {
     const char* start = str;
     rejit_token_list tokens;
-    int escaped = 0;
+    int escaped = 0, len = 1;
     rejit_token token;
 
     tokens.tokens = NULL;
@@ -45,16 +45,24 @@ rejit_token_list rejit_tokenize(const char* str, E* err) {
         K('.', DOT)
         K('(', LP)
         K(')', RP)
-        K('[', LK)
-        K(']', RK)
+        case '[':
+            tkind = RJ_TSET;
+            while (str[len] && str[len] != ']') ++len;
+            if (!*str) {
+                err->kind = RJ_PE_UBOUND;
+                err->pos = str-start;
+                return tokens;
+            } else ++len;
+            break;
         case '\\': escaped = 1; break;
         default: break;
         }
 
         token.kind = tkind;
         token.pos = str;
-        token.len = 1;
-        ++str;
+        token.len = len;
+        str += len;
+        len = 1;
 
         #define PREV (tokens.tokens[tokens.len-1])
 
