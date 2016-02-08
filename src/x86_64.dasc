@@ -64,7 +64,7 @@ static void compile_epilog(dasm_State** Dst) {
 }
 
 static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
-    int* pcl) {
+    int* pcl, int saved) {
     rejit_instruction* ia, *ib;
     unsigned long magic;
     char min, *s;
@@ -82,7 +82,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IPLUS:
     case RJ_IOPT:
         ia = instr+1;
-        if (instr->kind == RJ_IPLUS) compile_one(Dst, ia, errpc, pcl);
+        if (instr->kind == RJ_IPLUS) compile_one(Dst, ia, errpc, pcl, saved);
         | push STR
         *errpc = *pcl;
         GROW;
@@ -91,7 +91,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         if (instr->kind != RJ_IOPT)
             |=>bk:
         if (instr->kind == RJ_IPLUS) unskip(ia);
-        compile_one(Dst, ia, errpc, pcl);
+        compile_one(Dst, ia, errpc, pcl, saved+1);
         /*
            XXX: For RJ_IOPT, this will basically generate:
 
@@ -136,7 +136,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | jmp =>bk+1
         }
         |=>bk:
-        compile_one(Dst, ia, errpc, pcl);
+        compile_one(Dst, ia, errpc, pcl, saved);
         skip(ia);
         if (instr->kind == RJ_IMSTAR)
             |=>bk+1:
@@ -182,13 +182,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         GROW;
         bk = *pcl-1;
         | push STR
-        compile_one(Dst, ia, errpc, pcl);
+        compile_one(Dst, ia, errpc, pcl, saved+1);
         skip(ia);
         | jmp =>bk
         |=>*errpc:
         | mov STR, TOS
         *errpc = bk-1;
-        compile_one(Dst, ib, errpc, pcl);
+        compile_one(Dst, ib, errpc, pcl, saved+1);
         skip(ib);
         *errpc = ebk;
         | jmp =>bk
@@ -200,7 +200,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         break;
     case RJ_IGROUP:
         for (ia = (rejit_instruction*)instr++->value; instr != ia; ++instr) {
-            compile_one(Dst, instr, errpc, pcl);
+            compile_one(Dst, instr, errpc, pcl, saved);
             skip(instr);
         }
         break;
