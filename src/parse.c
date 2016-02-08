@@ -48,7 +48,7 @@ rejit_token_list rejit_tokenize(const char* str, E* err) {
         case '[':
             tkind = RJ_TSET;
             while (str[len] && str[len] != ']') ++len;
-            if (!*str) {
+            if (!str[len]) {
                 err->kind = RJ_PE_UBOUND;
                 err->pos = str-start;
                 return tokens;
@@ -130,6 +130,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   rejit_parse_result* res, E* err) {
     size_t i, j, ninstrs = 0, sl;
     STACK(rejit_instruction*) st;
+    char* s;
     st.len = 0;
     sl = strlen(str);
     ALLOC(res->instrs, sizeof(rejit_instruction)*(sl+1), {
@@ -180,6 +181,20 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             }
             POP(st)->value = (intptr_t)&CUR;
             break;
+        case RJ_TSET:
+            CUR.kind = RJ_ISET;
+            ALLOC(s, t.len*2, {
+                err->kind = RJ_PE_MEM;
+                err->pos = t.pos - str;
+                return;
+            });
+            memcpy(s, t.pos+1, t.len-2);
+            s[t.len-2] = 0;
+            memset(s+t.len-1, ' ', t.len-2);
+            s[t.len*2-3] = 0;
+            CUR.value = (intptr_t)s;
+            ++ninstrs;
+            break;
         default:
             assert(t.kind > RJ_TSUF);
         }
@@ -221,4 +236,9 @@ rejit_parse_result rejit_parse(const char* str, E* err) {
     return res;
 }
 
-void rejit_free_parse_result(rejit_parse_result p) { free(p.instrs); }
+void rejit_free_parse_result(rejit_parse_result p) {
+    int i;
+    for (i=0; p.instrs[i].kind != RJ_INULL; ++i)
+        if (p.instrs[i].kind == RJ_ISET) free((void*)p.instrs[i].value);
+    free(p.instrs);
+}
