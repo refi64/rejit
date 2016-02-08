@@ -16,14 +16,18 @@ static void compile_one(dasm_State**, rejit_instruction*, int*, int*);
 
 #define GROW dasm_growpc(Dst, ++*pcl)
 
-static unsigned long genmagic(const char* s, char* min) {
+static unsigned long genmagic(char* s, char* min, size_t* len) {
     unsigned long res=0;
-    const char* b=s;
+    char* b = s;
     // Get minimum.
     *min = *s;
     for (b=s; *s; ++s) if (*s < *min) *min = *s;
-    s=b;
-    while (*s) res |= 1<<(*s++-*min);
+    *len = s-b;
+    for (s=b; *s; ++s) {
+        int diff = *s-*min;
+        if (diff > sizeof(res)*8-1) b[*len+(s-b)+1] = 0;
+        else res |= 1lu<<diff;
+    }
     return res;
 }
 

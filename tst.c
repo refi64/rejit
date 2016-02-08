@@ -211,8 +211,10 @@ LIBCUT_TEST(test_end) {
 
 LIBCUT_TEST(test_set) {
     // [xyz]
-    rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)"xyz"}, {RJ_INULL}};
+    char s[] = "\txyz\0    ";
+    rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)s}, {RJ_INULL}};
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "\t"), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "x"), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "y"), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "z"), 1);
@@ -329,7 +331,8 @@ LIBCUT_TEST(test_search) {
 
 LIBCUT_TEST(test_set_and_dot) {
     // [abc].
-    rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)"abc"}, {RJ_IDOT},
+    const char s[] = "abc\0   ";
+    rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)s}, {RJ_IDOT},
                                   {RJ_INULL}};
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "ad"), 2);

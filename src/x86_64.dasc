@@ -67,8 +67,9 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     int* pcl) {
     rejit_instruction* ia, *ib;
     unsigned long magic;
-    char min;
-    int ebk = *errpc, bk;
+    char min, *s;
+    int ebk = *errpc, bk, i;
+    size_t len;
     if (instr->kind > RJ_ISKIP) return;
     switch (instr->kind) {
     case RJ_ISKIP: printf("RJ_ISKIP was added to RJ_INULL\n"); abort();
@@ -156,13 +157,20 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | jne =>*errpc
         break;
     case RJ_ISET:
-        magic = genmagic((const char*)instr->value, &min);
+        s = (char*)instr->value;
+        magic = genmagic(s, &min, &len);
+        GROW;
+        for (i=len+1; i<len*2+1; ++i) if (!s[i]) {
+            | cmp byte [STR], s[i-len-1]
+            | je =>*pcl-1
+        }
         | mov TMPD0, magic
         | movzx TMPD1, byte [STR]
         | sub TMPD1, min
         | js =>*errpc
         | bt TMPD0, TMPD1
         | jae =>*errpc
+        | =>*pcl-1:
         | inc STR
         break;
     case RJ_IOR:
