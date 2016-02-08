@@ -179,15 +179,24 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         *errpc = *pcl;
         GROW;
         GROW;
+        GROW;
         bk = *pcl-1;
+        | push STR
         compile_one(Dst, ia, errpc, pcl);
         skip(ia);
         | jmp =>bk
         |=>*errpc:
-        *errpc = ebk;
+        | mov STR, TOS
+        *errpc = bk-1;
         compile_one(Dst, ib, errpc, pcl);
         skip(ib);
+        *errpc = ebk;
+        | jmp =>bk
+        |=>bk-1:
+        | discard
+        | jmp =>*errpc
         |=>bk:
+        | discard
         break;
     case RJ_IGROUP:
         for (ia = (rejit_instruction*)instr++->value; instr != ia; ++instr) {
