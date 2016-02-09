@@ -433,6 +433,26 @@ LIBCUT_TEST(test_or_group) {
     LIBCUT_TEST_EQ(rejit_match(m, "a"), -1);
 }
 
+LIBCUT_TEST(test_misc) {
+    rejit_matcher m;
+    rejit_parse_error err;
+
+    m = rejit_parse_compile("[Oo]rgani[sz]ation", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+    LIBCUT_TEST_EQ(rejit_match(m, "Organization"), 12);
+    LIBCUT_TEST_EQ(rejit_match(m, "Organisation"), 12);
+    LIBCUT_TEST_EQ(rejit_match(m, "organization"), 12);
+    LIBCUT_TEST_EQ(rejit_match(m, "organisation"), 12);
+    LIBCUT_TEST_EQ(rejit_match(m, "organizatio"), -1);
+
+    m = rejit_parse_compile("hono(u)?r(able)?", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+    LIBCUT_TEST_EQ(rejit_match(m, "honor"), 5);
+    LIBCUT_TEST_EQ(rejit_match(m, "honour"), 6);
+    LIBCUT_TEST_EQ(rejit_match(m, "honorable"), 9);
+    LIBCUT_TEST_EQ(rejit_match(m, "honourable"), 10);
+}
+
 LIBCUT_MAIN(
     test_tokenize,
 
@@ -444,4 +464,6 @@ LIBCUT_MAIN(
     test_plus_group, test_mplus, test_mstar, test_or_mixed, test_set_and_dot,
     test_or_group,
 
-    test_search)
+    test_search,
+
+    test_misc)
