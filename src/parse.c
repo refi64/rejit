@@ -19,10 +19,7 @@
     } else (tgt) = realloc_r;\
 } while (0)
 
-typedef rejit_parse_error E;
-typedef rejit_token T;
-
-rejit_token_list rejit_tokenize(const char* str, E* err) {
+rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
     const char* start = str;
     rejit_token_list tokens;
     int escaped = 0, len = 1;
@@ -103,7 +100,7 @@ void rejit_free_tokens(rejit_token_list tokens) { free(tokens.tokens); }
 #define TOS(st) (st.stack[st.len-1])
 
 static void build_suffix_list(const char* str, rejit_token_list tokens,
-                              long* suffixes, E* err) {
+                              long* suffixes, rejit_parse_error* err) {
     size_t i, prev = -1;
     STACK(size_t) st;
     st.len = 0;
@@ -128,7 +125,7 @@ static void build_suffix_list(const char* str, rejit_token_list tokens,
 }
 
 static void parse(const char* str, rejit_token_list tokens, long* suffixes,
-                  rejit_parse_result* res, E* err) {
+                  rejit_parse_result* res, rejit_parse_error* err) {
     size_t i, j, ninstrs = 0, sl;
     STACK(rejit_instruction*) st;
     char* s;
@@ -209,7 +206,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
     }
 }
 
-rejit_parse_result rejit_parse(const char* str, E* err) {
+rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
     long* suffixes;
 
     rejit_parse_result res;
