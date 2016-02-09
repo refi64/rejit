@@ -139,8 +139,12 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             |=>bk:
         if (instr->kind == RJ_IPLUS) unskip(ia);
         compile_one(Dst, ia, errpc, pcl, saved+1);
+        | .if X64
         // XXX: Double save is just to override the previous save for rstsave.
         | save
+        | .else
+        | mov TOS, STR
+        | .endif
         if (instr->kind != RJ_IOPT) {
             // Without the braces here, DynAsm generates incorrect code.
             | jmp =>bk
