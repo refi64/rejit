@@ -1,7 +1,9 @@
 #include "dynasm/dasm_x86.h"
 
 | .if X64
+
 | .arch x64
+
 | .define STR, rdi
 | .define SAV, r11
 | .define TMPB, r12b
@@ -10,16 +12,42 @@
 | .define RET, rax
 | .define SP, rsp
 | .define TOS, qword [SP]
+
+| .define RED_ZONE_SIZE, 128 // Number of bytes available in the red zone.
+
 | .macro discard
 | add SP, 8
 | .endmacro
-| .macro save
+
+| .macro backup
 | mov SAV, STR
 | .endmacro
-| .macro unsave
+
+| .macro ubackup
 | .endmacro
+
+| .macro save
+|| if (saved < RED_ZONE_SIZE/8) {
+|      mov [rsp-8*(saved+1)], STR
+||     needs_unsave = 0;
+|| }
+|| else {
+|      push STR
+||     needs_unsave = 1;
+|| }
+| .endmacro
+
+| .macro rstsave
+|| if (needs_unsave)
+|     pop STR
+|| else
+|     mov STR, [rsp-8*(saved+1)]
+| .endmacro
+
 | .else
+
 | .arch x86
+
 | .define STR, edi
 | .define SAV, TOS
 | .define TMPB, dh
@@ -28,38 +56,57 @@
 | .define RET, eax
 | .define SP, esp
 | .define TOS, dword [SP]
+
 | .macro discard
 | add SP, 4
 | .endmacro
-| .macro save
+
+| .macro backup
 | push STR
 | .endmacro
-| .macro unsave
+
+| .macro ubackup
 | discard
 | .endmacro
+
+| .macro save
+|| needs_unsave = 1;
+|  push STR
+| .endmacro
+
+| .macro rstsave
+| pop STR
+| .endmacro
+
 | .endif
+
 | .section code
 | .globals lbl_
 | .actionlist actions
 
 | .define CONST, eax
 
+| .macro unsave
+|| if (needs_unsave)
+|      discard
+| .endmacro
+
 static void compile_prolog(dasm_State** Dst) {
     | .if not X64
     | mov STR, [esp+4]
     | .endif
-    | save
+    | backup
     | mov CONST, 1025
 }
 
 static void compile_epilog(dasm_State** Dst) {
     | mov RET, STR
     | sub RET, SAV
-    | unsave
+    | ubackup
     | ret
     |=>0:
     | mov RET, -1
-    | unsave
+    | ubackup
     | ret
 }
 
@@ -68,7 +115,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     rejit_instruction* ia, *ib;
     unsigned long magic;
     char min, *s;
-    int ebk = *errpc, bk, i;
+    int ebk = *errpc, bk, i, needs_unsave;
     size_t len;
     if (instr->kind > RJ_ISKIP) return;
     switch (instr->kind) {
@@ -83,7 +130,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IOPT:
         ia = instr+1;
         if (instr->kind == RJ_IPLUS) compile_one(Dst, ia, errpc, pcl, saved);
-        | push STR
+        | save
         *errpc = *pcl;
         GROW;
         bk = *pcl;
@@ -92,38 +139,14 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             |=>bk:
         if (instr->kind == RJ_IPLUS) unskip(ia);
         compile_one(Dst, ia, errpc, pcl, saved+1);
-        /*
-           XXX: For RJ_IOPT, this will basically generate:
-
-           mov TOS, STR
-           errpc:
-           pop STR
-
-           which seems kind of redundant to me? I mean, I guess a jump may not be
-           much faster...
-
-           According to http://www.agner.org/optimize/instruction_tables.pdf,
-           a jump to a near memory location takes 1 cycle, addition takes 1 cycle,
-           and a mov to memory from a register takes 1 cycle. Popping to a reg
-           takes 2 cyles. So the only alternative code I can think of:
-
-           jmp correct ; 1 cycle
-           errpc:
-           pop STR     ; 2 cycles
-           jmp after   ; 1 cycle
-           correct:
-           add rsp, 8  ; 1 cycle
-
-           would use 3 cycles on failure and 2 cycles on match...just like the
-           current code. I need to benchmark it a bit more.
-        */
-        | mov TOS, STR
+        // XXX: Double save is just to override the previous save for rstsave.
+        | save
         if (instr->kind != RJ_IOPT) {
             // Without the braces here, DynAsm generates incorrect code.
             | jmp =>bk
         }
         |=>*errpc:
-        | pop STR
+        | rstsave
         skip(ia);
         break;
     case RJ_IMSTAR:
