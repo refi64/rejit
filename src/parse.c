@@ -43,6 +43,7 @@ rejit_token_list rejit_tokenize(const char* str, E* err) {
         K('^', CARET)
         K('$', DOLLAR)
         K('.', DOT)
+        K('|', P)
         K('(', LP)
         K(')', RP)
         case '[':

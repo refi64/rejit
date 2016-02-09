@@ -29,7 +29,7 @@ typedef struct rejit_instruction_type {
 
 typedef struct rejit_token_type {
     enum {
-        RJ_TWORD, RJ_TCARET, RJ_TDOLLAR, RJ_TDOT, RJ_TLP, RJ_TRP, RJ_TSET,
+        RJ_TWORD, RJ_TCARET, RJ_TDOLLAR, RJ_TDOT, RJ_TLP, RJ_TRP, RJ_TSET, RJ_TP,
         RJ_TSUF,
         RJ_TSTAR, RJ_TPLUS, RJ_TQ,
     } kind;
