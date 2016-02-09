@@ -136,7 +136,7 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
                 err->pos = t.pos - str;
                 return;
             }
-            pp = st.len == 0 ? 0 : TOS(st);
+            pp = st.len == 0 ? 0 : TOS(st)+1;
             pipes[pp].mid = i+1;
             PUSH(pst, pp);
             prev = -1;
@@ -169,17 +169,19 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 tokens.tokens[suffixes[i]+1].kind == RJ_TQ && CUR.kind != RJ_IOPT)
                 CUR.kind += RJ_IMSTAR - RJ_ISTAR;
             ++ninstrs;
-        } else if (pipes[i].mid != -1) {
-            CUR.kind = RJ_IOR;
-            pipes[i].instr = &CUR;
-            PUSH(pst, pipes[i]);
-            ++ninstrs;
         } else if (pst.len && i == TOS(pst).mid) {
             CUR.kind = RJ_IGROUP;
             TOS(pst).instr->value = (intptr_t)&CUR;
             ++ninstrs;
         } else if (pst.len && i == TOS(pst).end)
             ((rejit_instruction*)POP(pst).instr->value)->value = (intptr_t)&CUR;
+
+        if (pipes[i].mid != -1) {
+            CUR.kind = RJ_IOR;
+            pipes[i].instr = &CUR;
+            PUSH(pst, pipes[i]);
+            ++ninstrs;
+        }
 
         switch (t.kind) {
         case RJ_TWORD:

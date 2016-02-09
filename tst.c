@@ -165,6 +165,22 @@ LIBCUT_TEST(test_parse_pipe) {
     LIBCUT_TEST_EQ(res.instrs[3].value, 'b');
 
     LIBCUT_TEST_EQ(res.instrs[4].kind, RJ_INULL);
+
+    PARSE("a|(b|c)")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IOR);
+    LIBCUT_TEST_EQ(res.instrs[0].value, (intptr_t)&res.instrs[2]);
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_ICHR);
+    LIBCUT_TEST_EQ(res.instrs[1].value, 'a');
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_IGROUP);
+    /* LIBCUT_TEST_EQ(res.instrs[2].value, (intptr_t)&res.instrs[4]); */
+
+    LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_IGROUP);
+    /* LIBCUT_TEST_EQ(res.instrs[3].value, 'b'); */
+
+    LIBCUT_TEST_EQ(res.instrs[4].kind, RJ_IOR);
 }
 
 LIBCUT_TEST(test_parse_other) {
