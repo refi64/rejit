@@ -209,8 +209,6 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
 }
 
 rejit_parse_result rejit_parse(const char* str, E* err) {
-    STACK(size_t) st;
-    st.len = 0;
     long* suffixes;
 
     rejit_parse_result res;
