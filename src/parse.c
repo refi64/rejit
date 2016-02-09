@@ -276,6 +276,16 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
     return res;
 }
 
+rejit_matcher rejit_compile(rejit_parse_result res) {
+    return rejit_compile_instrs(res.instrs, res.groups);
+}
+
+rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err) {
+    rejit_parse_result res = rejit_parse(str, err);
+    if (err->kind != RJ_PE_NONE) return (rejit_matcher)NULL;
+    return rejit_compile(res);
+}
+
 void rejit_free_parse_result(rejit_parse_result p) {
     int i;
     for (i=0; p.instrs[i].kind != RJ_INULL; ++i)

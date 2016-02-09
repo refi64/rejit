@@ -63,9 +63,8 @@ void rejit_free_tokens(rejit_token_list tokens);
 rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err);
 void rejit_free_parse_result(rejit_parse_result res);
 rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups);
-static rejit_matcher rejit_compile(rejit_parse_result res) {
-    return rejit_compile_instrs(res.instrs, res.groups);
-}
+rejit_matcher rejit_compile(rejit_parse_result res);
+rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err);
 int rejit_match(rejit_matcher m, const char* str);
 int rejit_search(rejit_matcher m, const char* str, const char** tgt);
 void rejit_free_matcher(rejit_matcher m);
