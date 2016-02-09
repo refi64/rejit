@@ -101,6 +101,7 @@ void rejit_free_tokens(rejit_token_list tokens) { free(tokens.tokens); }
 
 typedef struct pipe_type {
     long mid, end;
+    rejit_instruction* instr;
 } pipe;
 
 static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
@@ -147,8 +148,9 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   pipe* pipes, rejit_parse_result* res, rejit_parse_error* err) {
     size_t i, j, ninstrs = 0, sl;
     STACK(rejit_instruction*) st;
+    STACK(pipe) pst;
     char* s;
-    st.len = 0;
+    st.len = pst.len = 0;
     sl = strlen(str);
     ALLOC(res->instrs, sizeof(rejit_instruction)*(sl+1), {
         err->kind = RJ_PE_MEM;
@@ -167,7 +169,17 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 tokens.tokens[suffixes[i]+1].kind == RJ_TQ && CUR.kind != RJ_IOPT)
                 CUR.kind += RJ_IMSTAR - RJ_ISTAR;
             ++ninstrs;
-        }
+        } else if (pipes[i].mid != -1) {
+            CUR.kind = RJ_IOR;
+            pipes[i].instr = &CUR;
+            PUSH(pst, pipes[i]);
+            ++ninstrs;
+        } else if (pst.len && i == TOS(pst).mid) {
+            CUR.kind = RJ_IGROUP;
+            TOS(pst).instr->value = (intptr_t)&CUR;
+            ++ninstrs;
+        } else if (pst.len && i == TOS(pst).end)
+            ((rejit_instruction*)POP(pst).instr->value)->value = (intptr_t)&CUR;
 
         switch (t.kind) {
         case RJ_TWORD:
@@ -222,6 +234,11 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
     if (st.len != 0) {
         err->kind = RJ_PE_UBOUND;
         err->pos = sl;
+    }
+
+    while (pst.len) {
+        assert(TOS(pst).end == -1);
+        ((rejit_instruction*)POP(pst).instr->value)->value = (intptr_t)&CUR;
     }
 }
 
