@@ -99,18 +99,26 @@ void rejit_free_tokens(rejit_token_list tokens) { free(tokens.tokens); }
 #define POP(st) (st.stack[--st.len])
 #define TOS(st) (st.stack[st.len-1])
 
-static void build_suffix_list(const char* str, rejit_token_list tokens,
-                              long* suffixes, rejit_parse_error* err) {
-    size_t i, prev = -1;
-    STACK(size_t) st;
-    st.len = 0;
+typedef struct pipe_type {
+    long mid, end;
+} pipe;
 
-    for (i=0; i<tokens.len; ++i) suffixes[i] = -1;
+static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
+                                   long* suffixes, pipe* pipes,
+                                   rejit_parse_error* err) {
+    size_t i, prev = -1;
+    STACK(size_t) st, pst; // Group, pipe stack.
+    st.len = pst.len = 0;
+
+    for (i=0; i<tokens.len; ++i) suffixes[i] = pipes[i].mid = pipes[i].end = -1;
 
     for (i=0; i<tokens.len; ++i) {
         rejit_token t = tokens.tokens[i];
         if (t.kind == RJ_TLP) PUSH(st, i);
-        else if (t.kind == RJ_TRP) prev = POP(st);
+        else if (t.kind == RJ_TRP) {
+            prev = POP(st);
+            if (pst.len) pipes[POP(pst)].end = i;
+        }
         else if (t.kind > RJ_TSUF) {
             if (prev == -1) {
                 if (t.kind == RJ_TQ) continue;
@@ -120,12 +128,23 @@ static void build_suffix_list(const char* str, rejit_token_list tokens,
             }
             suffixes[prev] = i;
             prev = -1;
+        } else if (t.kind == RJ_TP) {
+            size_t pp;
+            if (i+1 == tokens.len) {
+                err->kind = RJ_PE_SYNTAX;
+                err->pos = t.pos - str;
+                return;
+            }
+            pp = st.len == 0 ? 0 : TOS(st);
+            pipes[pp].mid = i+1;
+            PUSH(pst, pp);
+            prev = -1;
         } else prev = i;
     }
 }
 
 static void parse(const char* str, rejit_token_list tokens, long* suffixes,
-                  rejit_parse_result* res, rejit_parse_error* err) {
+                  pipe* pipes, rejit_parse_result* res, rejit_parse_error* err) {
     size_t i, j, ninstrs = 0, sl;
     STACK(rejit_instruction*) st;
     char* s;
@@ -208,6 +227,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
 
 rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
     long* suffixes;
+    pipe* pipes;
 
     rejit_parse_result res;
     rejit_token_list tokens;
@@ -225,10 +245,15 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
         err->pos = 0;
         return res;
     });
-    build_suffix_list(str, tokens, suffixes, err);
+    ALLOC(pipes, sizeof(pipe)*tokens.len, {
+        err->kind = RJ_PE_MEM;
+        err->pos = 0;
+        return res;
+    });
+    build_suffix_pipe_list(str, tokens, suffixes, pipes, err);
     if (err->kind != RJ_PE_NONE) return res;
 
-    parse(str, tokens, suffixes, &res, err);
+    parse(str, tokens, suffixes, pipes, &res, err);
     return res;
 }
 
