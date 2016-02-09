@@ -209,8 +209,10 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         GROW;
         bk = *pcl-1;
         | push STR
-        compile_one(Dst, ia, errpc, pcl, saved+1);
-        skip(ia);
+        for (; ia != ib; ++ia) {
+            compile_one(Dst, ia, errpc, pcl, saved+1);
+            skip(ia);
+        }
         | jmp =>bk
         |=>*errpc:
         | mov STR, TOS
