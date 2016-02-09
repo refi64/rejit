@@ -225,7 +225,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             ++ninstrs;
             break;
         default:
-            assert(t.kind > RJ_TSUF);
+            assert(t.kind >= RJ_TP);
         }
     }
 
