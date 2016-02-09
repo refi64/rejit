@@ -120,10 +120,14 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     if (instr->kind > RJ_ISKIP) return;
     switch (instr->kind) {
     case RJ_ISKIP: printf("RJ_ISKIP was added to RJ_INULL\n"); abort();
-    case RJ_ICHR:
-        | cmp byte [STR], instr->value
-        | jne =>*errpc
-        | inc STR
+    case RJ_IWORD:
+        s = (char*)instr->value;
+        len = strlen(s);
+        for (i=0; i<len; ++i) {
+            | cmp byte [STR+i], s[i]
+            | jne =>*errpc
+        }
+        | add STR, len
         break;
     case RJ_ISTAR:
     case RJ_IPLUS:

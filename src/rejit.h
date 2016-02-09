@@ -13,7 +13,7 @@ typedef struct rejit_matcher_type {
 }* rejit_matcher;
 
 typedef enum {
-    RJ_INULL, RJ_ICHR, RJ_IDOT, RJ_IBEGIN, RJ_IEND,
+    RJ_INULL, RJ_IWORD, RJ_IDOT, RJ_IBEGIN, RJ_IEND,
     RJ_ISET, RJ_IARG, RJ_ISTAR, RJ_IPLUS, RJ_IOPT, RJ_IMSTAR, RJ_IMPLUS, RJ_IVARG,
     RJ_IOR, RJ_IGROUP, RJ_ISKIP
     // > iarg: following op is argument.

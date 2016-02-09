@@ -146,7 +146,7 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
 
 static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   pipe* pipes, rejit_parse_result* res, rejit_parse_error* err) {
-    size_t i, j, ninstrs = 0, sl;
+    size_t i, ninstrs = 0, sl;
     STACK(rejit_instruction*) st;
     STACK(pipe) pst;
     char* s;
@@ -185,11 +185,16 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
 
         switch (t.kind) {
         case RJ_TWORD:
-            for (j=0; j<t.len; ++j) {
-                CUR.kind = RJ_ICHR;
-                CUR.value = t.pos[j];
-                ++ninstrs;
-            }
+            CUR.kind = RJ_IWORD;
+            ALLOC(s, t.len+1, {
+                err->kind = RJ_PE_MEM;
+                err->pos = t.pos - str;
+                return;
+            });
+            memcpy(s, t.pos, t.len);
+            s[t.len] = 0;
+            CUR.value = (intptr_t)s;
+            ++ninstrs;
             break;
         case RJ_TCARET: case RJ_TDOLLAR:
             CUR.kind = RJ_IEND - (RJ_TDOLLAR - t.kind);
