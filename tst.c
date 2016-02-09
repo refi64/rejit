@@ -169,18 +169,30 @@ LIBCUT_TEST(test_parse_pipe) {
     PARSE("a|(b|c)")
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IOR);
-    LIBCUT_TEST_EQ(res.instrs[0].value, (intptr_t)&res.instrs[2]);
+    LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
 
     LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_ICHR);
     LIBCUT_TEST_EQ(res.instrs[1].value, 'a');
 
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_IGROUP);
-    /* LIBCUT_TEST_EQ(res.instrs[2].value, (intptr_t)&res.instrs[4]); */
+    LIBCUT_TEST_EQ((void*)res.instrs[2].value, (void*)&res.instrs[8]);
 
     LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_IGROUP);
-    /* LIBCUT_TEST_EQ(res.instrs[3].value, 'b'); */
+    LIBCUT_TEST_EQ((void*)res.instrs[3].value, (void*)&res.instrs[8]);
 
     LIBCUT_TEST_EQ(res.instrs[4].kind, RJ_IOR);
+    LIBCUT_TEST_EQ((void*)res.instrs[4].value, (void*)&res.instrs[6]);
+
+    LIBCUT_TEST_EQ(res.instrs[5].kind, RJ_ICHR);
+    LIBCUT_TEST_EQ(res.instrs[5].value, 'b');
+
+    LIBCUT_TEST_EQ(res.instrs[6].kind, RJ_IGROUP);
+    LIBCUT_TEST_EQ((void*)res.instrs[6].value, (void*)&res.instrs[8]);
+
+    LIBCUT_TEST_EQ(res.instrs[7].kind, RJ_ICHR);
+    LIBCUT_TEST_EQ(res.instrs[7].value, 'c');
+
+    LIBCUT_TEST_EQ(res.instrs[8].kind, RJ_INULL);
 }
 
 LIBCUT_TEST(test_parse_other) {
