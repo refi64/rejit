@@ -24,7 +24,8 @@ int bench(const char* regex, const char* s, int it) {
 
     if (m->groups) groups = calloc(m->groups, sizeof(rejit_group));
     start = get_time();
-    for (i=0; i<it; ++i) r = rejit_match(m, s, groups);
+    r = rejit_match(m, s, groups);
+    for (i=0; i<it; ++i) rejit_match(m, s, groups);
     end = get_time();
     diff = end-start;
 
