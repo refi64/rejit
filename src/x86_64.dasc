@@ -102,6 +102,8 @@
 |      discard
 | .endmacro
 
+| .type group, rejit_group
+
 static void compile_prolog(dasm_State** Dst) {
     | .if not X64
     | mov STR, [esp+4]

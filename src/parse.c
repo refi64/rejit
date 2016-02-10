@@ -205,7 +205,14 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             ++ninstrs;
             break;
         case RJ_TLP:
-            CUR.kind = RJ_IGROUP;
+            if (i+2 < tokens.len && tokens.tokens[i+1].kind == RJ_TQ &&
+                tokens.tokens[i+2].kind == RJ_TWORD &&
+                *tokens.tokens[i+2].pos == ':') {
+                CUR.kind = RJ_IGROUP;
+                ++i;
+                ++tokens.tokens[i+1].pos;
+                --tokens.tokens[i+1].len;
+            } else CUR.kind = RJ_ICGROUP;
             PUSH(st, &CUR);
             ++ninstrs;
             break;

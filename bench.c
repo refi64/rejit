@@ -15,19 +15,22 @@ int bench(const char* regex, const char* s, int it) {
     double start, end, diff;
     int r;
     rejit_parse_error err;
+    rejit_group* groups = NULL;
     rejit_matcher m = rejit_parse_compile(regex, &err);
     if (err.kind != RJ_PE_NONE) {
         fprintf(stderr, "Error compiling regex (pos: %zu)\n", err.pos);
         return 1;
     }
 
+    if (m->groups) groups = calloc(m->groups, sizeof(rejit_group));
     start = get_time();
-    for (i=0; i<it; ++i) r = rejit_match(m, s);
+    for (i=0; i<it; ++i) r = rejit_match(m, s, groups);
     end = get_time();
     diff = end-start;
 
     printf("Time spent: %.2fs (average %fms per match, matched: %s)\n", diff,
            (diff*1000)/it, r == -1 ? "false" : "true");
+    free(groups);
     return 0;
 }
 

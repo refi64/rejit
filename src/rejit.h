@@ -4,7 +4,11 @@
 #include <inttypes.h>
 #include <string.h>
 
-typedef long (*rejit_func)(const char*);
+typedef struct rejit_group_type {
+    const char* start, *end;
+} rejit_group;
+
+typedef long (*rejit_func)(const char*, rejit_group*);
 
 typedef struct rejit_matcher_type {
     rejit_func func;
@@ -15,11 +19,11 @@ typedef struct rejit_matcher_type {
 typedef enum {
     RJ_INULL, RJ_IWORD, RJ_IDOT, RJ_IBEGIN, RJ_IEND,
     RJ_ISET, RJ_IARG, RJ_ISTAR, RJ_IPLUS, RJ_IOPT, RJ_IMSTAR, RJ_IMPLUS, RJ_IVARG,
-    RJ_IOR, RJ_IGROUP, RJ_ISKIP
-    // > iarg: following op is argument.
-    // > varg: value is rejit_instruction*.
-    // For RJ_IGROUP, value points to one past the end of the current group.
-    // For RJ_ISET, value is const char*.
+    RJ_IOR, RJ_IGROUP, RJ_ICGROUP, RJ_ISKIP
+    /* > iarg: following op is argument.
+       > varg: value is rejit_instruction*.
+       For RJ_IGROUP, RJ_ICGROUP, value points to one past the end of the current
+       group. For RJ_ISET, value is const char*. */
 } rejit_instr_kind;
 
 typedef struct rejit_instruction_type {
@@ -65,8 +69,9 @@ void rejit_free_parse_result(rejit_parse_result res);
 rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups);
 rejit_matcher rejit_compile(rejit_parse_result res);
 rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err);
-int rejit_match(rejit_matcher m, const char* str);
-int rejit_search(rejit_matcher m, const char* str, const char** tgt);
+int rejit_match(rejit_matcher m, const char* str, rejit_group* groups);
+int rejit_search(rejit_matcher m, const char* str, const char** tgt,
+                 rejit_group* groups);
 void rejit_free_matcher(rejit_matcher m);
 
 #endif

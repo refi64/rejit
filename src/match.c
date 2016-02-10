@@ -99,10 +99,17 @@ rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups) {
     return res;
 }
 
-int rejit_match(rejit_matcher m, const char* str) { return m->func(str); }
-int rejit_search(rejit_matcher m, const char* str, const char** tgt) {
+int rejit_match(rejit_matcher m, const char* str, rejit_group* groups) {
+    return m->func(str, groups);
+}
+
+int rejit_search(rejit_matcher m, const char* str, const char** tgt,
+                 rejit_group* groups) {
     int res = -1;
-    for (;res == -1 && *str; ++str) res = rejit_match(m, str);
+    for (;res == -1 && *str; ++str) {
+        if (m->groups) memset(groups, 0, sizeof(rejit_group)*m->groups);
+        res = rejit_match(m, str, groups);
+    }
     if (tgt != NULL && res != -1) *tgt = str+1;
     return res;
 }
