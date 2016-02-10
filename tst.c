@@ -321,10 +321,10 @@ LIBCUT_TEST(test_cgroup) {
     // (a(b)?)
     rejit_group groups[2];
     const char str1[] = "a", str2[] = "ab";
-    rejit_instruction instrs[] = {{RJ_ICGROUP}, {RJ_IWORD, (intptr_t)"a"},
-                                  {RJ_ICGROUP}, {RJ_IOPT},
+    rejit_instruction instrs[] = {{RJ_ICGROUP, 0, 0}, {RJ_IWORD, (intptr_t)"a"},
+                                  {RJ_IOPT}, {RJ_ICGROUP, 0, 1},
                                   {RJ_IWORD, (intptr_t)"b"}, {RJ_INULL}};
-    instrs[0].value = instrs[2].value = (intptr_t)&instrs[5];
+    instrs[0].value = instrs[3].value = (intptr_t)&instrs[5];
     rejit_matcher m = rejit_compile_instrs(instrs, 0);
 
     memset(groups, 0, sizeof(groups));
