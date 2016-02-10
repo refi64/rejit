@@ -37,11 +37,18 @@
 || }
 | .endmacro
 
+| .macro gsave
+|| if (needs_unsave)
+|      mov STR, TOS
+|| else
+|      mov STR, [rsp-8*(saved+1)]
+| .endmacro
+
 | .macro rstsave
 || if (needs_unsave)
-|     pop STR
+|       pop STR
 || else
-|     mov STR, [rsp-8*(saved+1)]
+|       mov STR, [rsp-8*(saved+1)]
 | .endmacro
 
 | .else
@@ -72,6 +79,10 @@
 | .macro save
 || needs_unsave = 1;
 |  push STR
+| .endmacro
+
+| .macro gsave
+|  mov STR, TOS
 | .endmacro
 
 | .macro rstsave
@@ -134,7 +145,6 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IOPT:
         ia = instr+1;
         if (instr->kind == RJ_IPLUS) compile_one(Dst, ia, errpc, pcl, saved);
-        | save
         *errpc = *pcl;
         GROW;
         bk = *pcl;
@@ -142,19 +152,12 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         if (instr->kind != RJ_IOPT)
             |=>bk:
         if (instr->kind == RJ_IPLUS) unskip(ia);
-        compile_one(Dst, ia, errpc, pcl, saved+1);
-        | .if X64
-        // XXX: Double save is just to override the previous save for rstsave.
-        | save
-        | .else
-        | mov TOS, STR
-        | .endif
+        compile_one(Dst, ia, errpc, pcl, saved);
         if (instr->kind != RJ_IOPT) {
             // Without the braces here, DynAsm generates incorrect code.
             | jmp =>bk
         }
         |=>*errpc:
-        | rstsave
         skip(ia);
         break;
     case RJ_IMSTAR:
@@ -212,24 +215,25 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         GROW;
         GROW;
         bk = *pcl-1;
-        | push STR
+        /* | push STR */
+        | save
         for (; ia != ib; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1);
             skip(ia);
         }
         | jmp =>bk
         |=>*errpc:
-        | mov STR, TOS
+        | gsave
         *errpc = bk-1;
         compile_one(Dst, ib, errpc, pcl, saved+1);
         skip(ib);
         *errpc = ebk;
         | jmp =>bk
         |=>bk-1:
-        | discard
+        | rstsave
         | jmp =>*errpc
         |=>bk:
-        | discard
+        | unsave
         break;
     case RJ_IGROUP:
         for (ia = (rejit_instruction*)instr++->value; instr != ia; ++instr) {
