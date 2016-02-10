@@ -87,6 +87,7 @@ def build(ctx):
     src = dasm.translate('src/x86_64.dasc', 'codegen.c')
     rejit = c.build_lib('rejit', Path.glob('src/*.c'),
         includes=['.', ctx.buildroot], macros=['DEBUG'])
+    c.build_exe('bench', ['bench.c'], includes=['src'], libs=[rejit])
     if rec.tests:
         c.build_exe('tst', ['tst.c'], includes=['src'], cflags=rec.testflags,
             libs=[rejit])
