@@ -237,10 +237,22 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | unsave
         break;
     case RJ_IGROUP:
+        *errpc = bk = *pcl;
+        GROW;
+        GROW;
+        | save
         for (ia = (rejit_instruction*)instr++->value; instr != ia; ++instr) {
-            compile_one(Dst, instr, errpc, pcl, saved);
+            compile_one(Dst, instr, errpc, pcl, saved+1);
             skip(instr);
         }
+        *errpc = ebk;
+        | jmp =>bk+1
+        |=>bk:
+        | rstsave
+        | jmp =>*errpc
+        |=>bk+1:
+        if (needs_unsave)
+            | unsave
         break;
     default: printf("unrecognized opcode: %d\n", instr->kind); abort();
     };
