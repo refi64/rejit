@@ -210,13 +210,12 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IOR:
         ia = instr+1;
         ib = (rejit_instruction*)instr->value;
+        | save
         *errpc = *pcl;
         GROW;
         GROW;
-        GROW;
         bk = *pcl-1;
-        /* | push STR */
-        | save
+        if (needs_unsave) GROW;
         for (; ia != ib; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1);
             skip(ia);
@@ -224,14 +223,16 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | jmp =>bk
         |=>*errpc:
         | gsave
-        *errpc = bk-1;
+        *errpc = needs_unsave ? bk+1 : ebk;
         compile_one(Dst, ib, errpc, pcl, saved+1);
         skip(ib);
         *errpc = ebk;
-        | jmp =>bk
-        |=>bk-1:
-        | rstsave
-        | jmp =>*errpc
+        if (needs_unsave) {
+            | jmp =>bk
+            |=>bk+1:
+            | rstsave
+            | jmp =>*errpc
+        }
         |=>bk:
         | unsave
         break;
