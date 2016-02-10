@@ -130,7 +130,7 @@ static void compile_epilog(dasm_State** Dst) {
 
 static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     int* pcl, int saved) {
-    rejit_instruction* ia, *ib;
+    rejit_instruction* ia, *ib, *ic;
     unsigned long magic;
     char min, *s;
     int ebk = *errpc, bk, i, needs_unsave;
@@ -217,6 +217,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IOR:
         ia = instr+1;
         ib = (rejit_instruction*)instr->value;
+        ic = (rejit_instruction*)instr->value2;
         | save
         *errpc = *pcl;
         GROW;
@@ -231,8 +232,10 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         |=>*errpc:
         | gsave
         *errpc = needs_unsave ? bk+1 : ebk;
-        compile_one(Dst, ib, errpc, pcl, saved+1);
-        skip(ib);
+        for (; ia != ic; ++ia) {
+            compile_one(Dst, ia, errpc, pcl, saved+1);
+            skip(ia);
+        }
         *errpc = ebk;
         if (needs_unsave) {
             | jmp =>bk

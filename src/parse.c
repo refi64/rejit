@@ -169,12 +169,10 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 tokens.tokens[suffixes[i]+1].kind == RJ_TQ && CUR.kind != RJ_IOPT)
                 CUR.kind += RJ_IMSTAR - RJ_ISTAR;
             ++ninstrs;
-        } else if (pst.len && i == TOS(pst).mid) {
-            CUR.kind = RJ_IGROUP;
+        } else if (pst.len && i == TOS(pst).mid)
             TOS(pst).instr->value = (intptr_t)&CUR;
-            ++ninstrs;
-        } else if (pst.len && i == TOS(pst).end)
-            ((rejit_instruction*)POP(pst).instr->value)->value = (intptr_t)&CUR;
+        else if (pst.len && i == TOS(pst).end)
+            POP(pst).instr->value2 = (intptr_t)&CUR;
 
         if (pipes[i].mid != -1) {
             CUR.kind = RJ_IOR;
@@ -255,7 +253,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
 
     while (pst.len) {
         assert(TOS(pst).end == -1);
-        ((rejit_instruction*)POP(pst).instr->value)->value = (intptr_t)&CUR;
+        POP(pst).instr->value2 = (intptr_t)&CUR;
     }
 }
 
