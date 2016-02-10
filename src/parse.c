@@ -152,7 +152,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
     char* s;
     st.len = pst.len = 0;
     sl = strlen(str);
-    ALLOC(res->instrs, sizeof(rejit_instruction)*(sl+1), {
+    ALLOC(res->instrs, sizeof(rejit_instruction)*(tokens.len+1), {
         err->kind = RJ_PE_MEM;
         err->pos = 0;
         return;
