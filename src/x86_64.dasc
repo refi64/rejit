@@ -5,10 +5,12 @@
 | .arch x64
 
 | .define STR, rdi
+| .define GR, rsi
 | .define SAV, r11
 | .define TMPB, r12b
 | .define TMPD0, r12d
 | .define TMPD1, edx
+| .define TMPL, r12
 | .define RET, rax
 | .define SP, rsp
 | .define TOS, qword [SP]
@@ -56,10 +58,12 @@
 | .arch x86
 
 | .define STR, edi
+| .define GR, ebx
 | .define SAV, TOS
 | .define TMPB, dh
 | .define TMPD0, edx
 | .define TMPD1, ecx
+| .define TMPL, edx
 | .define RET, eax
 | .define SP, esp
 | .define TOS, dword [SP]
@@ -107,6 +111,7 @@
 static void compile_prolog(dasm_State** Dst) {
     | .if not X64
     | mov STR, [esp+4]
+    | mov GR, [esp+8]
     | .endif
     | backup
     | mov CONST, 1025
@@ -238,14 +243,15 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         |=>bk:
         | unsave
         break;
+    case RJ_ICGROUP:
     case RJ_IGROUP:
         *errpc = bk = *pcl;
         GROW;
         GROW;
         | save
-        for (ia = (rejit_instruction*)instr++->value; instr != ia; ++instr) {
-            compile_one(Dst, instr, errpc, pcl, saved+1);
-            skip(instr);
+        for (ia = instr+1; ia != (rejit_instruction*)instr->value; ++ia) {
+            compile_one(Dst, ia, errpc, pcl, saved+1);
+            skip(ia);
         }
         *errpc = ebk;
         | jmp =>bk+1
@@ -253,8 +259,24 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | rstsave
         | jmp =>*errpc
         |=>bk+1:
+        if (instr->kind == RJ_ICGROUP) {
+            if (needs_unsave)
+                | mov TMPL, TOS
+            else
+                | .if X64
+                | mov TMPL, [SP-8*(saved+1)]
+                | .else
+                || printf("needs_unsave should be true on X86\n"); abort();
+                | .endif
+        }
+
         if (needs_unsave)
             | unsave
+
+        if (instr->kind == RJ_ICGROUP) {
+            | mov group:GR[instr->value2].begin, TMPL
+            | mov group:GR[instr->value2].end, STR
+        }
         break;
     default: printf("unrecognized opcode: %d\n", instr->kind); abort();
     };

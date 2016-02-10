@@ -5,7 +5,7 @@
 #include <string.h>
 
 typedef struct rejit_group_type {
-    const char* start, *end;
+    const char* begin, *end;
 } rejit_group;
 
 typedef long (*rejit_func)(const char*, rejit_group*);
@@ -28,7 +28,7 @@ typedef enum {
 
 typedef struct rejit_instruction_type {
     rejit_instr_kind kind;
-    intptr_t value;
+    intptr_t value, value2;
 } rejit_instruction;
 
 typedef struct rejit_token_type {
