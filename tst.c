@@ -555,6 +555,21 @@ LIBCUT_TEST(test_or_group) {
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
 }
 
+LIBCUT_TEST(test_back) {
+    // (abc)d\1e
+    rejit_instruction instrs[] = {{RJ_ICGROUP}, {RJ_IWORD, (intptr_t)"abc"},
+                                  {RJ_IWORD, (intptr_t)"d"}, {RJ_IBACK, 0},
+                                  {RJ_IWORD, (intptr_t)"e"}};
+    rejit_group group;
+    instrs[0].value = (intptr_t)&instrs[2];
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcdabce", &group), 8);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcdabe", &group), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "abdabe", &group), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "abdabce", &group), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcdabc", &group), -1);
+}
+
 LIBCUT_TEST(test_misc) {
     rejit_matcher m;
     rejit_parse_error err;
@@ -608,6 +623,7 @@ LIBCUT_MAIN(
     test_set, test_nset, test_or, test_group, test_cgroup, test_opt_group,
     test_star_group, test_plus_group, test_lookahead, test_negative_lookahead,
     test_mplus, test_mstar, test_or_mixed, test_set_and_dot, test_or_group,
+    test_back,
 
     test_search,
 

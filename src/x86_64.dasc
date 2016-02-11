@@ -7,10 +7,11 @@
 | .define STR, rdi
 | .define GR, rsi
 | .define SAV, r11
-| .define TMPB, r12b
+| .define TMPB, r8b
 | .define TMPD0, r12d
 | .define TMPD1, edx
-| .define TMPL, r12
+| .define TMPL0, r12
+| .define TMPL1, rdx
 | .define RET, rax
 | .define SP, rsp
 | .define TOS, qword [SP]
@@ -60,10 +61,11 @@
 | .define STR, edi
 | .define GR, ebx
 | .define SAV, TOS
-| .define TMPB, dh
+| .define TMPB, ch
 | .define TMPD0, edx
-| .define TMPD1, ecx
-| .define TMPL, edx
+| .define TMPD1, ebp
+| .define TMPL0, TMPD0
+| .define TMPL0, TMPD1
 | .define RET, eax
 | .define SP, esp
 | .define TOS, dword [SP]
@@ -112,6 +114,7 @@ static void compile_prolog(dasm_State** Dst) {
     | .if not X64
     | mov STR, [esp+4]
     | mov GR, [esp+8]
+    | push ebp
     | .endif
     | backup
     | mov CONST, 1025
@@ -121,10 +124,16 @@ static void compile_epilog(dasm_State** Dst) {
     | mov RET, STR
     | sub RET, SAV
     | ubackup
+    | .if not X64
+    | pop ebp
+    | .endif
     | ret
     |=>0:
     | mov RET, -1
     | ubackup
+    | .if not X64
+    | pop ebp
+    | .endif
     | ret
 }
 
@@ -196,6 +205,25 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IEND:
         | cmp byte [STR], 0
         | jne =>*errpc
+        break;
+    case RJ_IBACK:
+        bk = *pcl;
+        GROW;
+        GROW;
+        | mov TMPL0, group:GR[instr->value].begin
+        | mov TMPL1, group:GR[instr->value].end
+        | sub TMPL1, TMPL0
+        | jz =>*errpc
+        |=>bk:
+        | dec TMPL1
+        | mov TMPB, [STR+TMPL1]
+        | cmp TMPB, [TMPL0+TMPL1]
+        | jne =>*errpc
+        | test TMPL1, TMPL1
+        | jnz =>bk
+        | sub TMPL0, group:GR[instr->value].end
+        // TMPL0 now holds -len, so str-(-len) == str+len.
+        | sub STR, TMPL0
         break;
     case RJ_ISET:
     case RJ_INSET:
@@ -306,10 +334,10 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         }
         if (instr->kind == RJ_ICGROUP) {
             if (needs_unsave)
-                | mov TMPL, TOS
+                | mov TMPL0, TOS
             else
                 | .if X64
-                | mov TMPL, [SP-8*(saved+1)]
+                | mov TMPL0, [SP-8*(saved+1)]
                 | .else
                 || printf("needs_unsave should be true on X86\n"); abort();
                 | .endif
@@ -321,7 +349,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | unsave
 
         if (instr->kind == RJ_ICGROUP) {
-            | mov group:GR[instr->value2].begin, TMPL
+            | mov group:GR[instr->value2].begin, TMPL0
             | mov group:GR[instr->value2].end, STR
         }
         break;
