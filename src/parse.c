@@ -45,6 +45,7 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
         K(')', RP)
         case '[':
             tkind = RJ_TSET;
+            if (str[len] == '^') ++str;
             while (str[len] && str[len] != ']') ++len;
             if (!str[len]) {
                 err->kind = RJ_PE_UBOUND;
@@ -234,7 +235,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             POP(st)->value = (intptr_t)&CUR;
             break;
         case RJ_TSET:
-            CUR.kind = RJ_ISET;
+            CUR.kind = *t.pos == '^' ? RJ_INSET : RJ_ISET;
             ALLOC(s, t.len*2, {
                 err->kind = RJ_PE_MEM;
                 err->pos = t.pos - str;
