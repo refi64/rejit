@@ -1,0 +1,6 @@
+#!/bin/sh
+# Any copyright is dedicated to the Public Domain.
+# http://creativecommons.org/publicdomain/zero/1.0/
+
+objdump -bbinary -mi386:x86-64 -Mintel -D /tmp/.rejit.dis | \
+    awk '{ if(p){print;} } /<.data/{ p=1 }'

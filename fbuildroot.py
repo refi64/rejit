@@ -1,3 +1,6 @@
+# Any copyright is dedicated to the Public Domain.
+# http://creativecommons.org/publicdomain/zero/1.0/
+
 from fbuild.builders.c import guess_static
 from fbuild.builders import find_program
 from fbuild.config import c as c_test
