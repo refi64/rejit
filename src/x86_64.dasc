@@ -65,7 +65,7 @@
 | .define TMPD0, edx
 | .define TMPD1, ebp
 | .define TMPL0, TMPD0
-| .define TMPL0, TMPD1
+| .define TMPL1, TMPD1
 | .define RET, eax
 | .define SP, esp
 | .define TOS, dword [SP]
@@ -335,17 +335,18 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         if (instr->kind == RJ_ICGROUP) {
             if (needs_unsave)
                 | mov TMPL0, TOS
-            else
+            else {
                 | .if X64
                 | mov TMPL0, [SP-8*(saved+1)]
                 | .else
                 || printf("needs_unsave should be true on X86\n"); abort();
                 | .endif
+            }
         }
 
         if (instr->kind == RJ_ILAHEAD)
             | rstsave
-        else
+        else if (instr->kind != RJ_INLAHEAD)
             | unsave
 
         if (instr->kind == RJ_ICGROUP) {
