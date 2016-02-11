@@ -198,15 +198,23 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | jne =>*errpc
         break;
     case RJ_ISET:
+    case RJ_INSET:
         s = (char*)instr->value;
         magic = genmagic(s, &min, &len);
         bk = *pcl;
+        #define SK (instr->kind == RJ_ISET ? bk : *errpc)
+        #define UK (instr->kind == RJ_ISET ? bk+1 : *errpc)
+        #define AE (instr->kind == RJ_ISET ? *errpc : bk)
         GROW;
         GROW;
+        if (instr->kind == RJ_INSET) {
+            | cmp byte [STR], 0
+            | je =>bk+1
+        }
         for (i=len+1; i<len*2+1; ++i)
             if (!s[i]) {
                 | cmp byte [STR], s[i-len-1]
-                | je =>bk
+                | je =>SK
             } else if (s[i] == 'W') {
                 int j;
                 const char* ust = &s[i-len-1];
@@ -220,18 +228,20 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
                 }
                 --i;
                 | add STR, j
-                | jmp =>bk+1
+                | jmp =>UK
                 | =>*pcl-1:
             }
         if (magic) {
             | mov TMPD0, magic
             | movzx TMPD1, byte [STR]
             | sub TMPD1, min
-            | js =>*errpc
+            | js =>AE
             | bt TMPD0, TMPD1
-            | jae =>*errpc
+            | jae =>AE
+            if (instr->kind == RJ_INSET)
+                | jmp =>*errpc
         } else {
-            | jmp =>*errpc
+            | jmp =>AE
         }
         | =>bk:
         | inc STR

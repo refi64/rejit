@@ -335,6 +335,19 @@ LIBCUT_TEST(test_set) {
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
 }
 
+LIBCUT_TEST(test_nset) {
+    // [^xyz]
+    char s[] = "\txyz\0    ";
+    rejit_instruction instrs[] = {{RJ_INSET, (intptr_t)s}, {RJ_INULL}};
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "\t", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "x", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "y", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "z", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "", NULL), 0);
+}
+
 LIBCUT_TEST(test_or) {
     // a|b
     rejit_instruction instrs[] = {{RJ_IOR}, {RJ_IWORD, (intptr_t)"a"},
@@ -586,9 +599,9 @@ LIBCUT_MAIN(
     test_parse_pipe, test_parse_lookahead, test_parse_other,
 
     test_chr, test_dot, test_plus, test_star, test_opt, test_begin, test_end,
-    test_set, test_or, test_group, test_cgroup, test_opt_group, test_star_group,
-    test_plus_group, test_lookahead, test_negative_lookahead, test_mplus,
-    test_mstar, test_or_mixed, test_set_and_dot, test_or_group,
+    test_set, test_nset, test_or, test_group, test_cgroup, test_opt_group,
+    test_star_group, test_plus_group, test_lookahead, test_negative_lookahead,
+    test_mplus, test_mstar, test_or_mixed, test_set_and_dot, test_or_group,
 
     test_search,
 
