@@ -32,6 +32,7 @@ int bench(const char* regex, const char* s, int it) {
     printf("Time spent: %.2fs (average %fms per match, matched: %s)\n", diff,
            (diff*1000)/it, r == -1 ? "false" : "true");
     free(groups);
+    rejit_free_matcher(m);
     return 0;
 }
 

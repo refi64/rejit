@@ -286,6 +286,9 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
     if (err->kind != RJ_PE_NONE) return res;
 
     parse(str, tokens, suffixes, pipes, &res, err);
+    free(suffixes);
+    free(pipes);
+    free(tokens.tokens);
     return res;
 }
 
@@ -294,14 +297,18 @@ rejit_matcher rejit_compile(rejit_parse_result res) {
 }
 
 rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err) {
-    rejit_parse_result res = rejit_parse(str, err);
+    rejit_matcher m;
+    rejit_parse_result p = rejit_parse(str, err);
     if (err->kind != RJ_PE_NONE) return (rejit_matcher)NULL;
-    return rejit_compile(res);
+    m = rejit_compile(p);
+    rejit_free_parse_result(p);
+    return m;
 }
 
 void rejit_free_parse_result(rejit_parse_result p) {
     int i;
     for (i=0; p.instrs[i].kind != RJ_INULL; ++i)
-        if (p.instrs[i].kind == RJ_ISET) free((void*)p.instrs[i].value);
+        if (p.instrs[i].kind == RJ_ISET || p.instrs[i].kind == RJ_IWORD)
+            free((void*)p.instrs[i].value);
     free(p.instrs);
 }

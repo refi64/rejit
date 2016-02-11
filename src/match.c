@@ -49,27 +49,27 @@ static void skip(rejit_instruction* instr) {
 
 #include "codegen.c"
 
-static void* link_and_encode(dasm_State** d) {
-    size_t sz;
+static void* link_and_encode(dasm_State** d, size_t* sz) {
     void* buf;
     #ifdef DEBUG
     FILE* f;
     #endif
-    dasm_link(d, &sz);
-    buf = mmap(0, sz, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    dasm_link(d, sz);
+    buf = mmap(0, *sz, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1,
+               0);
     dasm_encode(d, buf);
     #ifdef DEBUG
     f = fopen("/tmp/.rejit.dis", "w");
     if (f) {
-        fwrite(buf, 1, sz, f);
+        fwrite(buf, 1, *sz, f);
         fclose(f);
     }
     #endif
-    mprotect(buf, sz, PROT_READ | PROT_EXEC);
+    mprotect(buf, *sz, PROT_READ | PROT_EXEC);
     return buf;
 }
 
-static rejit_func compile(dasm_State** d, rejit_instruction* instrs) {
+static rejit_func compile(dasm_State** d, size_t* sz, rejit_instruction* instrs) {
     int i;
     void* labels[lbl__MAX];
     dasm_setupglobal(d, labels, lbl__MAX);
@@ -82,19 +82,21 @@ static rejit_func compile(dasm_State** d, rejit_instruction* instrs) {
     for (i=0; instrs[i].kind; ++i) compile_one(d, &instrs[i], &errpc, &pcl, 0);
     compile_epilog(d);
 
-    return link_and_encode(d);
+    return link_and_encode(d, sz);
 }
 
 rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups) {
     rejit_func func;
     rejit_matcher res;
+    size_t sz;
     dasm_State* d;
     dasm_init(&d, DASM_MAXSECTION);
-    func = compile(&d, instrs);
+    func = compile(&d, &sz, instrs);
     dasm_free(&d);
     res = malloc(sizeof(struct rejit_matcher_type));
     if (!res) return NULL;
     res->func = func;
+    res->sz = sz;
     res->groups = groups;
     return res;
 }
