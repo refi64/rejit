@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #define ALLOC(tgt,sz,f) do {\
     (tgt) = calloc(1, sz);\
@@ -22,7 +23,7 @@
 rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
     const char* start = str;
     rejit_token_list tokens;
-    int escaped = 0, len = 1;
+    int escaped = 0, len;
     rejit_token token;
 
     tokens.tokens = NULL;
@@ -30,6 +31,7 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
 
     while (*str) {
         int tkind = RJ_TWORD;
+        len = 1;
 
         if (escaped) escaped = 0;
         else switch (*str) {
@@ -53,7 +55,12 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
                 return tokens;
             } else ++len;
             break;
-        case '\\': escaped = 1; break;
+        case '\\':
+            if (isdigit(str[1])) {
+                tkind = RJ_TBACK;
+                len = 2;
+            } else escaped = 1;
+            break;
         default: break;
         }
 
@@ -61,7 +68,6 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
         token.pos = str;
         token.len = len;
         str += len;
-        len = 1;
 
         #define PREV (tokens.tokens[tokens.len-1])
 
@@ -246,6 +252,11 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             memset(s+t.len-1, ' ', t.len-2);
             s[t.len*2-3] = 0;
             CUR.value = (intptr_t)s;
+            ++ninstrs;
+            break;
+        case RJ_TBACK:
+            CUR.kind = RJ_IBACK;
+            CUR.value = t.pos[1] - '0';
             ++ninstrs;
             break;
         default:
