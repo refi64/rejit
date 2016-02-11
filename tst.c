@@ -553,6 +553,15 @@ LIBCUT_TEST(test_misc) {
     LIBCUT_TEST_EQ(rejit_match(m, "ac", &group), 2);
     LIBCUT_TEST_EQ(group.begin, NULL);
     LIBCUT_TEST_EQ(group.end, NULL);
+
+    m = rejit_parse_compile("[ÁÃa]b", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+    LIBCUT_TEST_EQ(m->groups, 0);
+    LIBCUT_TEST_NE(rejit_match(m, "Áb", NULL), -1);
+    LIBCUT_TEST_NE(rejit_match(m, "Ãb", NULL), -1);
+    LIBCUT_TEST_NE(rejit_match(m, "ab", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "Âb", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "b", NULL), -1);
 }
 
 LIBCUT_MAIN(

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "dynasm/dasm_proto.h"
+#include "utf/utf.h"
 
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
 #define MAP_ANONYMOUS MAP_ANON
@@ -19,12 +20,23 @@ static void compile_one(dasm_State**, rejit_instruction*, int*, int*, int);
 static unsigned long genmagic(char* s, char* min, size_t* len) {
     unsigned long res=0;
     char* b = s;
+    Rune r;
     // Get minimum.
     *min = *s;
     for (b=s; *s; ++s) if (*s < *min) *min = *s;
     *len = s-b;
     for (s=b; *s; ++s) {
-        int diff = *s-*min;
+        int diff, rl = chartorune(&r, s);
+        if (rl > 1) {
+            int i;
+            b[*len+(s-b)+1] = 'W';
+            for (i=1; i<rl; ++i) {
+                b[*len+(s-b+i)+1] = 'U';
+            }
+            s += rl-1;
+            continue;
+        }
+        diff = *s-*min;
         if (diff > sizeof(res)*8-1) b[*len+(s-b)+1] = 0;
         else res |= 1lu<<diff;
     }

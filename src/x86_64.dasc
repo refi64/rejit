@@ -200,19 +200,42 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_ISET:
         s = (char*)instr->value;
         magic = genmagic(s, &min, &len);
+        bk = *pcl;
         GROW;
-        for (i=len+1; i<len*2+1; ++i) if (!s[i]) {
-            | cmp byte [STR], s[i-len-1]
-            | je =>*pcl-1
+        GROW;
+        for (i=len+1; i<len*2+1; ++i)
+            if (!s[i]) {
+                | cmp byte [STR], s[i-len-1]
+                | je =>bk
+            } else if (s[i] == 'W') {
+                int j;
+                const char* ust = &s[i-len-1];
+                GROW;
+                | cmp byte [STR], *ust
+                | jne =>*pcl-1
+                ++i;
+                for (j=1; s[i] == 'U'; ++i, ++j) {
+                    | cmp byte[STR+j], ust[j]
+                    | jne =>*pcl-1
+                }
+                --i;
+                | add STR, j
+                | jmp =>bk+1
+                | =>*pcl-1:
+            }
+        if (magic) {
+            | mov TMPD0, magic
+            | movzx TMPD1, byte [STR]
+            | sub TMPD1, min
+            | js =>*errpc
+            | bt TMPD0, TMPD1
+            | jae =>*errpc
+        } else {
+            | jmp =>*errpc
         }
-        | mov TMPD0, magic
-        | movzx TMPD1, byte [STR]
-        | sub TMPD1, min
-        | js =>*errpc
-        | bt TMPD0, TMPD1
-        | jae =>*errpc
-        | =>*pcl-1:
+        | =>bk:
         | inc STR
+        | =>bk+1:
         break;
     case RJ_IOR:
         ia = instr+1;
