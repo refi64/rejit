@@ -389,6 +389,21 @@ LIBCUT_TEST(test_plus_group) {
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
 }
 
+LIBCUT_TEST(test_lookahead) {
+    // (?=ab)a(bc)?
+    rejit_instruction instrs[] = {{RJ_ILAHEAD}, {RJ_IWORD, (intptr_t)"ab"},
+                                  {RJ_IWORD, (intptr_t)"a"}, {RJ_IOPT},
+                                  {RJ_IGROUP}, {RJ_IWORD, (intptr_t)"bc"},
+                                  {RJ_INULL}};
+    instrs[0].value = (intptr_t)&instrs[2];
+    instrs[4].value = (intptr_t)&instrs[6];
+    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "ab", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "abc", NULL), 3);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
+}
+
 LIBCUT_TEST(test_mplus) {
     // .+?b
     rejit_instruction instrs[] = {{RJ_IMPLUS}, {RJ_IDOT},
@@ -509,8 +524,8 @@ LIBCUT_MAIN(
 
     test_chr, test_dot, test_plus, test_star, test_opt, test_begin, test_end,
     test_set, test_or, test_group, test_cgroup, test_opt_group, test_star_group,
-    test_plus_group, test_mplus, test_mstar, test_or_mixed, test_set_and_dot,
-    test_or_group,
+    test_plus_group, test_lookahead, test_mplus, test_mstar, test_or_mixed,
+    test_set_and_dot, test_or_group,
 
     test_search,
 
