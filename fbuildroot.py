@@ -59,7 +59,8 @@ def configure(ctx):
     if ctx.options.use_color:
         flags.append('-fdiagnostics-color')
 
-    c = guess_static(ctx, exe=ctx.options.cc, flags=flags, debug=True)
+    c = guess_static(ctx, exe=ctx.options.cc, flags=flags, includes=['utf'],
+                     debug=True)
     arch = get_target_arch(ctx, c)
     if arch == 'x86_64':
         defs.append('X64')
@@ -85,7 +86,7 @@ def build(ctx):
     c = rec.c
     dasm = rec.dasm
     src = dasm.translate('src/x86_64.dasc', 'codegen.c')
-    rejit = c.build_lib('rejit', Path.glob('src/*.c'),
+    rejit = c.build_lib('rejit', Path.glob('src/*.c') + [Path('utf/utf.c')],
         includes=['.', ctx.buildroot], macros=['DEBUG'])
     c.build_exe('bench', ['bench.c'], includes=['src'], libs=[rejit])
     if rec.tests:
