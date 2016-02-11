@@ -19,7 +19,7 @@ typedef struct rejit_matcher_type {
 typedef enum {
     RJ_INULL, RJ_IWORD, RJ_IDOT, RJ_IBEGIN, RJ_IEND,
     RJ_ISET, RJ_IARG, RJ_ISTAR, RJ_IPLUS, RJ_IOPT, RJ_IMSTAR, RJ_IMPLUS, RJ_IVARG,
-    RJ_IOR, RJ_IGROUP, RJ_ICGROUP, RJ_ILAHEAD, RJ_ISKIP
+    RJ_IOR, RJ_IGROUP, RJ_ICGROUP, RJ_ILAHEAD, RJ_INLAHEAD, RJ_ISKIP
     /* > iarg: following op is argument.
        > varg: value is rejit_instruction*.
        For RJ_IGROUP, RJ_ICGROUP, value points to one past the end of the current
