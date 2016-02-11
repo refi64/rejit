@@ -203,14 +203,19 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             ++ninstrs;
             break;
         case RJ_TLP:
-            if (i+2 < tokens.len && tokens.tokens[i+1].kind == RJ_TQ &&
-                tokens.tokens[i+2].kind == RJ_TWORD &&
-                *tokens.tokens[i+2].pos == ':') {
-                CUR.kind = RJ_IGROUP;
-                ++i;
-                ++tokens.tokens[i+1].pos;
-                --tokens.tokens[i+1].len;
-            } else {
+            #define M(c,t)\
+            if (i+2 < tokens.len && tokens.tokens[i+1].kind == RJ_TQ &&\
+                tokens.tokens[i+2].kind == RJ_TWORD &&\
+                *tokens.tokens[i+2].pos == c) {\
+                CUR.kind = RJ_I##t;\
+                ++i;\
+                ++tokens.tokens[i+1].pos;\
+                --tokens.tokens[i+1].len;\
+            }
+            M(':', GROUP)
+            else M('=', LAHEAD)
+            else M('!', NLAHEAD)
+            else {
                 CUR.kind = RJ_ICGROUP;
                 CUR.value2 = res->groups++;
             }

@@ -189,6 +189,31 @@ LIBCUT_TEST(test_parse_pipe) {
     LIBCUT_TEST_EQ(res.instrs[6].kind, RJ_INULL);
 }
 
+LIBCUT_TEST(test_parse_lookahead) {
+    rejit_parse_error err;
+    rejit_parse_result res;
+
+    PARSE("(?=ab)")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ILAHEAD);
+    LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_IWORD);
+    LIBCUT_TEST_STREQ((char*)res.instrs[1].value, "ab");
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
+
+    PARSE("(?!ab)")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INLAHEAD);
+    LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_IWORD);
+    LIBCUT_TEST_STREQ((char*)res.instrs[1].value, "ab");
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
+}
+
 LIBCUT_TEST(test_parse_other) {
     rejit_parse_error err;
     rejit_parse_result res;
@@ -534,7 +559,7 @@ LIBCUT_MAIN(
     test_tokenize,
 
     test_parse_word, test_parse_suffix, test_parse_group, test_parse_set,
-    test_parse_pipe, test_parse_other,
+    test_parse_pipe, test_parse_lookahead, test_parse_other,
 
     test_chr, test_dot, test_plus, test_star, test_opt, test_begin, test_end,
     test_set, test_or, test_group, test_cgroup, test_opt_group, test_star_group,
