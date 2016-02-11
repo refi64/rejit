@@ -146,7 +146,7 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
 
 static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   pipe* pipes, rejit_parse_result* res, rejit_parse_error* err) {
-    size_t i, ninstrs = 0, sl, groups = 0;
+    size_t i, ninstrs = 0, sl;
     STACK(rejit_instruction*) st;
     STACK(pipe) pst;
     char* s;
@@ -212,7 +212,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 --tokens.tokens[i+1].len;
             } else {
                 CUR.kind = RJ_ICGROUP;
-                CUR.value2 = groups++;
+                CUR.value2 = res->groups++;
             }
             PUSH(st, &CUR);
             ++ninstrs;

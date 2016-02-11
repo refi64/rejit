@@ -470,6 +470,9 @@ LIBCUT_TEST(test_or_group) {
 LIBCUT_TEST(test_misc) {
     rejit_matcher m;
     rejit_parse_error err;
+    rejit_group group;
+
+    group.begin = group.end = NULL;
 
     m = rejit_parse_compile("[Oo]rgani[sz]ation", &err);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
@@ -485,6 +488,17 @@ LIBCUT_TEST(test_misc) {
     LIBCUT_TEST_EQ(rejit_match(m, "honour", NULL), 6);
     LIBCUT_TEST_EQ(rejit_match(m, "honorable", NULL), 9);
     LIBCUT_TEST_EQ(rejit_match(m, "honourable", NULL), 10);
+
+    m = rejit_parse_compile("a(b)?c", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+    LIBCUT_TEST_EQ(m->groups, 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "abc", &group), 3);
+    LIBCUT_TEST_STREQ(group.begin, "bc");
+    LIBCUT_TEST_STREQ(group.end, "c");
+    group.begin = group.end = NULL;
+    LIBCUT_TEST_EQ(rejit_match(m, "ac", &group), 2);
+    LIBCUT_TEST_EQ(group.begin, NULL);
+    LIBCUT_TEST_EQ(group.end, NULL);
 }
 
 LIBCUT_MAIN(
