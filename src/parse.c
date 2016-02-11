@@ -307,8 +307,10 @@ rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err) {
 
 void rejit_free_parse_result(rejit_parse_result p) {
     int i;
-    for (i=0; p.instrs[i].kind != RJ_INULL; ++i)
+    for (i=0; p.instrs[i].kind != RJ_INULL; ++i) {
+        if (p.instrs[i].kind > RJ_ISKIP) p.instrs[i].kind -= RJ_ISKIP;
         if (p.instrs[i].kind == RJ_ISET || p.instrs[i].kind == RJ_IWORD)
             free((void*)p.instrs[i].value);
+    }
     free(p.instrs);
 }
