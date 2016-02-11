@@ -90,6 +90,21 @@ LIBCUT_TEST(test_parse_suffix) {
 
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
+    PARSE("a(?:b?)")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IWORD);
+    LIBCUT_TEST_STREQ((char*)res.instrs[0].value, "a");
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_IGROUP);
+    LIBCUT_TEST_EQ((void*)res.instrs[1].value, (void*)&res.instrs[4]);
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_IOPT);
+
+    LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_IWORD);
+    LIBCUT_TEST_STREQ((char*)res.instrs[3].value, "b");
+
+    LIBCUT_TEST_EQ(res.instrs[4].kind, RJ_INULL);
+
     rejit_parse("+", &err);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_SYNTAX);
     LIBCUT_TEST_EQ(err.pos, 0);

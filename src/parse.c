@@ -115,7 +115,10 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
 
     for (i=0; i<tokens.len; ++i) {
         rejit_token t = tokens.tokens[i];
-        if (t.kind == RJ_TLP) PUSH(st, i);
+        if (t.kind == RJ_TLP) {
+            PUSH(st, i);
+            prev = -1;
+        }
         else if (t.kind == RJ_TRP) {
             prev = POP(st);
             if (pst.len) pipes[POP(pst)].end = i;
