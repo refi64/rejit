@@ -19,8 +19,11 @@ def pre_options(parser):
         make_option('--lua', help='Use the given Lua executable'),
         make_option('--cc', help='Use the given C compiler'),
         make_option('--cflag', help='Pass the given flag to the C++ compiler',
-            action='append', default=[]),
-        make_option('--use-color', help='Use colored output', action='store_true')
+                    action='append', default=[]),
+        make_option('--use-color', help='Use colored output',
+                    action='store_true'),
+        make_option('--release', help='Build in release mode',
+                    action='store_true', default=False),
     ))
 
 class Libcut_h(c_test.Test):
@@ -59,11 +62,18 @@ def configure(ctx):
     flags = ['-Wall', '-Werror']+ctx.options.cflag
     testflags = []
     defs = []
+    kw = {}
     if ctx.options.use_color:
         flags.append('-fdiagnostics-color')
 
-    c = guess_static(ctx, exe=ctx.options.cc, flags=flags, includes=['utf'],
-                     debug=True)
+    if ctx.options.release:
+        kw['optimize'] = True
+        kw['macros'] = ['NDEBUG']
+    else:
+        kw['debug'] = True
+        kw['macros'] = ['DEBUG']
+
+    c = guess_static(ctx, exe=ctx.options.cc, flags=flags, includes=['utf'], **kw)
     arch = get_target_arch(ctx, c)
     if arch == 'x86_64':
         defs.append('X64')
@@ -90,7 +100,7 @@ def build(ctx):
     dasm = rec.dasm
     src = dasm.translate('src/x86_64.dasc', 'codegen.c')
     rejit = c.build_lib('rejit', Path.glob('src/*.c') + [Path('utf/utf.c')],
-        includes=['.', ctx.buildroot], macros=['DEBUG'])
+        includes=['.', ctx.buildroot])
     c.build_exe('bench', ['bench.c'], includes=['src'], libs=[rejit])
     if rec.tests:
         c.build_exe('tst', ['tst.c'], includes=['src'], cflags=rec.testflags,
