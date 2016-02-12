@@ -194,6 +194,20 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         |=>*errpc:
         skip(ia);
         break;
+    case RJ_IREP:
+        ia = instr+1;
+        for (i=0; i<instr->value; ++i) {
+            compile_one(Dst, ia, errpc, pcl, saved, flags);
+            unskip(ia);
+        }
+        *errpc = *pcl;
+        for (i=instr->value; i<instr->value2; ++i) {
+            compile_one(Dst, ia, errpc, pcl, saved, flags);
+            unskip(ia);
+        }
+        |=>*errpc:
+        skip(ia);
+        break;
     case RJ_IMSTAR:
     case RJ_IMPLUS:
         ia = instr+1;
