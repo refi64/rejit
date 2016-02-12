@@ -5,7 +5,7 @@
 #include "rejit.h"
 
 rejit_matcher rejit_compile(rejit_parse_result res, rejit_flags flags) {
-    return rejit_compile_instrs(res.instrs, res.groups, flags);
+    return rejit_compile_instrs(res.instrs, res.groups, res.flags | flags);
 }
 
 rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err,

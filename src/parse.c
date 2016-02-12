@@ -289,6 +289,7 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
     rejit_token_list tokens;
     res.instrs = NULL;
     res.groups = 0;
+    res.flags = RJ_FNONE;
 
     err->kind = RJ_PE_NONE;
     err->pos = 0;

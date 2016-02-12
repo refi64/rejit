@@ -60,6 +60,7 @@ typedef struct rejit_token_list_type {
 typedef struct rejit_parse_result_type {
     rejit_instruction* instrs;
     int groups;
+    rejit_flags flags;
 } rejit_parse_result;
 
 typedef struct rejit_parse_error_type {
