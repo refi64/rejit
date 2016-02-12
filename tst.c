@@ -8,7 +8,7 @@ LIBCUT_TEST(test_tokenize) {
     rejit_parse_error err;
     err.kind = RJ_PE_NONE;
     err.pos = 0;
-    const char s[] = "A(bC)*+?[abc]d\\+|e\\2";
+    char s[] = "A(bC)*+?[abc]d\\+|e\\2";
     rejit_token_list tokens = rejit_tokenize(s, &err);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
 
@@ -550,7 +550,7 @@ LIBCUT_TEST(test_search) {
 
 LIBCUT_TEST(test_set_and_dot) {
     // [abc].
-    const char s[] = "abc\0   ";
+    char s[] = "abc\0   ";
     rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)s}, {RJ_IDOT},
                                   {RJ_INULL}};
     rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
@@ -599,6 +599,37 @@ LIBCUT_TEST(test_dotall) {
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "\n", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
+}
+
+LIBCUT_TEST(test_icase_word) {
+    rejit_instruction instrs[] = {{RJ_IWORD, (intptr_t)"aBCd"}, {RJ_INULL}};
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FICASE);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcd", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "Abcd", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "aBcd", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "abCd", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcD", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "ABCD", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "AbCd", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "aBcD", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "ABCd", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcD", NULL), 4);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcf", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
+}
+
+LIBCUT_TEST(test_icase_set) {
+    char s[] = "abcd\0    ";
+    rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)s}, {RJ_INULL}};
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FICASE);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "A", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "b", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "B", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "C", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "d", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "D", NULL), 1);
 }
 
 LIBCUT_TEST(test_misc) {
@@ -654,7 +685,7 @@ LIBCUT_MAIN(
     test_set, test_nset, test_or, test_group, test_cgroup, test_opt_group,
     test_star_group, test_plus_group, test_lookahead, test_negative_lookahead,
     test_mplus, test_mstar, test_or_mixed, test_set_and_dot, test_or_group,
-    test_back, test_dotall,
+    test_back, test_dotall, test_icase_word, test_icase_set,
 
     test_search,
 

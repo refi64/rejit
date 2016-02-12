@@ -155,8 +155,18 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         s = (char*)instr->value;
         len = strlen(s);
         for (i=0; i<len; ++i) {
-            | cmp byte [STR+i], s[i]
-            | jne =>*errpc
+            char c = s[i];
+            | cmp byte [STR+i], c
+            if (flags & RJ_FICASE && isalpha(c)) {
+                c = isupper(c) ? tolower(c) : toupper(c);
+                bk = *pcl;
+                GROW;
+                | je =>bk
+                | cmp byte [STR+i], c
+                | jne =>*errpc
+                |=>bk:
+            } else
+                | jne =>*errpc
         }
         | add STR, len
         break;
@@ -239,7 +249,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_ISET:
     case RJ_INSET:
         s = (char*)instr->value;
-        magic = genmagic(s, &min, &len);
+        magic = genmagic(s, &min, &len, flags & RJ_FICASE);
         bk = *pcl;
         #define SK (instr->kind == RJ_ISET ? bk : *errpc)
         #define UK (instr->kind == RJ_ISET ? bk+1 : *errpc)
@@ -252,8 +262,14 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         }
         for (i=len+1; i<len*2+1; ++i)
             if (!s[i]) {
-                | cmp byte [STR], s[i-len-1]
+                char c = s[i-len-1];
+                | cmp byte [STR], c
                 | je =>SK
+                if (flags & RJ_FICASE) {
+                    c = isupper(c) ? tolower(c) : toupper(c);
+                    | cmp byte [STR], c
+                    | je =>SK
+                }
             } else if (s[i] == 'W') {
                 int j;
                 const char* ust = &s[i-len-1];
@@ -282,9 +298,9 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         } else {
             | jmp =>AE
         }
-        | =>bk:
+        |=>bk:
         | inc STR
-        | =>bk+1:
+        |=>bk+1:
         break;
     case RJ_IOR:
         ia = instr+1;

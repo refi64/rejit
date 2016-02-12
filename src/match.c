@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "dynasm/dasm_proto.h"
 #include "utf/utf.h"
 
@@ -22,16 +23,20 @@ static void compile_one(dasm_State**, rejit_instruction*, int*, int*, int,
 
 #define GROW dasm_growpc(Dst, ++*pcl)
 
-static unsigned long genmagic(char* s, char* min, size_t* len) {
+static unsigned long genmagic(char* s, char* min, size_t* len, int icase) {
     unsigned long res=0;
     char* b = s;
     Rune r;
     // Get minimum.
     *min = *s;
-    for (b=s; *s; ++s) if (*s < *min) *min = *s;
+    for (b=s; *s; ++s) {
+        // Uppercase chars always have a lower ASCII value than lowercase.
+        char c = icase ? isupper(*s) : *s;
+        if (c < *min) *min = c;
+    }
     *len = s-b;
     for (s=b; *s; ++s) {
-        int diff, rl = chartorune(&r, s);
+        int j, rl = chartorune(&r, s);
         if (rl > 1) {
             int i;
             b[*len+(s-b)+1] = 'W';
@@ -41,9 +46,14 @@ static unsigned long genmagic(char* s, char* min, size_t* len) {
             s += rl-1;
             continue;
         }
-        diff = *s-*min;
-        if (diff > sizeof(res)*8-1) b[*len+(s-b)+1] = 0;
-        else res |= 1lu<<diff;
+        for (j=0; j<(icase?2:1); ++j) {
+            int diff;
+            char c = *s;
+            if (icase) c = j ? toupper(c) : tolower(c);
+            diff = c-*min;
+            if (diff > sizeof(res)*8-1) b[*len+(s-b)+1] = 0;
+            else res |= 1lu<<diff;
+        }
     }
     return res;
 }
