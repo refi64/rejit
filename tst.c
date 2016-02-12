@@ -110,11 +110,32 @@ LIBCUT_TEST(test_parse_suffix) {
     LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_IWORD);
     LIBCUT_TEST_STREQ((char*)res.instrs[3].value, "b");
 
-    LIBCUT_TEST_EQ(res.instrs[4].kind, RJ_INULL);
+    PARSE("a{2,5}")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IREP);
+    LIBCUT_TEST_EQ(res.instrs[0].value, 2);
+    LIBCUT_TEST_EQ(res.instrs[0].value2, 5);
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_IWORD);
+    LIBCUT_TEST_STREQ((char*)res.instrs[1].value, "a");
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
     rejit_parse("+", &err);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_SYNTAX);
     LIBCUT_TEST_EQ(err.pos, 0);
+
+    rejit_parse("a{a5}", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_INT);
+    LIBCUT_TEST_EQ(err.pos, 2);
+
+    rejit_parse("a{2a,5}", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_INT);
+    LIBCUT_TEST_EQ(err.pos, 3);
+
+    rejit_parse("a{2,b}", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_INT);
+    LIBCUT_TEST_EQ(err.pos, 4);
 }
 
 LIBCUT_TEST(test_parse_group) {

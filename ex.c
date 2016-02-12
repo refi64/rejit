@@ -13,9 +13,10 @@ rejit_matcher compile(char* regex) {
         switch (err.kind) {
         case RJ_PE_NONE: abort();
         case RJ_PE_SYNTAX: ERR("invalid syntax"); break;
-        case RJ_PE_UBOUND: ERR("unbound parenthesis/bracket"); break;
+        case RJ_PE_UBOUND: ERR("unbound parenthesis/bracket/curly brace"); break;
         case RJ_PE_OVFLOW: ERR("too many nested parentheses"); break;
         case RJ_PE_RANGE: ERR("invalid character range"); break;
+        case RJ_PE_INT: ERR("expected integer"); break;
         case RJ_PE_MEM: ERR("out of memory"); break;
         }
         ERR("\n");

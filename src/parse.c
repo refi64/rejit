@@ -50,9 +50,10 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
         K('(', LP)
         K(')', RP)
         case '[':
-            tkind = RJ_TSET;
-            if (str[len] == '^') ++str;
-            while (str[len] && str[len] != ']') ++len;
+        case '{':
+            tkind = *str == '[' ? RJ_TSET : RJ_TREP;
+            if (tkind == RJ_TSET && str[len] == '^') ++str;
+            while (str[len] && str[len] != (tkind == RJ_TSET ? ']' : '}')) ++len;
             if (!str[len]) {
                 err->kind = RJ_PE_UBOUND;
                 err->pos = str-start;
@@ -227,7 +228,23 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
         rejit_token t = tokens.tokens[i];
 
         if (suffixes[i] != -1) {
-            CUR.kind = tokens.tokens[suffixes[i]].kind - RJ_TSTAR + RJ_ISTAR;
+            rejit_token st = tokens.tokens[suffixes[i]];
+            CUR.kind = st.kind - RJ_TSTAR + RJ_ISTAR;
+            if (st.kind == RJ_TREP) {
+                char* ep;
+                CUR.value = strtol(st.pos+1, &ep, 10);
+                if (*ep != ',') {
+                    err->kind = RJ_PE_INT;
+                    err->pos = ep - str;
+                    return;
+                }
+                CUR.value2 = strtol(ep+1, &ep, 10);
+                if (*ep != '}') {
+                    err->kind = RJ_PE_INT;
+                    err->pos = ep - str;
+                    return;
+                }
+            }
             if (suffixes[i]+1 < tokens.len &&
                 tokens.tokens[suffixes[i]+1].kind == RJ_TQ && CUR.kind != RJ_IOPT)
                 CUR.kind += RJ_IMSTAR - RJ_ISTAR;
