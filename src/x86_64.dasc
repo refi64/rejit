@@ -156,17 +156,20 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         len = strlen(s);
         for (i=0; i<len; ++i) {
             char c = s[i];
-            | cmp byte [STR+i], c
             if (flags & RJ_FICASE && isalpha(c)) {
-                c = isupper(c) ? tolower(c) : toupper(c);
+                char uc = toupper(c), lc = tolower(c);
                 bk = *pcl;
                 GROW;
+                | mov TMPB, [STR+i]
+                | cmp TMPB, uc
                 | je =>bk
-                | cmp byte [STR+i], c
+                | cmp TMPB, lc
                 | jne =>*errpc
                 |=>bk:
-            } else
+            } else {
+                | cmp byte [STR+i], c
                 | jne =>*errpc
+            }
         }
         | add STR, len
         break;
