@@ -69,6 +69,7 @@ typedef struct rejit_parse_error_type {
         RJ_PE_SYNTAX, // Syntax error.
         RJ_PE_UBOUND, // Unbound parenthesis or bracket.
         RJ_PE_OVFLOW, // Stack overflow (too many nested parens).
+        RJ_PE_RANGE,  // Bad character range.
         RJ_PE_MEM,    // Out of memory.
     } kind;
     size_t pos;

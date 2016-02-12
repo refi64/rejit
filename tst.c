@@ -169,9 +169,29 @@ LIBCUT_TEST(test_parse_set) {
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value, "abc");
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value+4, "   ");
 
+    PARSE("[a-z0-9]")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ISET);
+    LIBCUT_TEST_STREQ((char*)res.instrs[0].value,
+                      "abcdefghijklmnopqrstuvwxyz0123456789");
+    LIBCUT_TEST_STREQ((char*)res.instrs[0].value+37,
+                      "                                    ");
+
+    PARSE("[^a-z0-9]")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INSET);
+    LIBCUT_TEST_STREQ((char*)res.instrs[0].value,
+                      "abcdefghijklmnopqrstuvwxyz0123456789");
+    LIBCUT_TEST_STREQ((char*)res.instrs[0].value+37,
+                      "                                    ");
+
     rejit_parse("[abc", &err);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_UBOUND);
     LIBCUT_TEST_EQ(err.pos, 0);
+
+    rejit_parse("[z-a]", &err);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_RANGE);
+    LIBCUT_TEST_EQ(err.pos, 2);
 }
 
 LIBCUT_TEST(test_parse_pipe) {

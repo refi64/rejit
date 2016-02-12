@@ -158,6 +158,55 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
     }
 }
 
+/* static char alphas[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"; */
+/* static char digits[] = "0123456789"; */
+
+static char* expand_set(const char* str, const char* set, size_t len,
+                        rejit_parse_error* err) {
+    size_t rlen = 0;
+    char* res, *p;
+    int escaped = 0, i;
+    for (i=0; i<len; ++i) {
+        if (escaped) ++rlen;
+        else if (set[i] == '\\') escaped = 1;
+        else if (i && set[i] == '-' && i+1 < len) {
+            char b = set[i-1], e = set[i+1];
+            if (b > e) {
+                err->kind = RJ_PE_RANGE;
+                err->pos = set+i-str;
+                return NULL;
+            }
+            rlen += e-b;
+            ++i;
+        }
+        else ++rlen;
+    }
+
+    ALLOC(res, rlen*2+2, {
+        err->kind = RJ_PE_MEM;
+        err->pos = set-str;
+        return NULL;
+    });
+    p = res;
+
+    for (i=0; i<len; ++i) {
+        if (escaped) *p++ = set[i];
+        else if (set[i] == '\\') escaped = 1;
+        else if (i && set[i] == '-' && i+1 < len) {
+            char b = set[i-1], e = set[i+1];
+            for (++b; b<=e; ++b) *p++ = b;
+            ++i;
+        }
+        else *p++ = set[i];
+    }
+    *p++ = 0;
+
+    for (i=0; i<rlen; ++i) *p++ = ' ';
+    *p = 0;
+
+    return res;
+}
+
 static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   pipe* pipes, rejit_parse_result* res, rejit_parse_error* err) {
     size_t i, ninstrs = 0, sl;
@@ -259,15 +308,8 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             break;
         case RJ_TSET:
             CUR.kind = *t.pos == '^' ? RJ_INSET : RJ_ISET;
-            ALLOC(s, t.len*2, {
-                err->kind = RJ_PE_MEM;
-                err->pos = t.pos - str;
-                return;
-            });
-            memcpy(s, t.pos+1, t.len-2);
-            s[t.len-2] = 0;
-            memset(s+t.len-1, ' ', t.len-2);
-            s[t.len*2-3] = 0;
+            s = expand_set(str, t.pos+1, t.len-2, err);
+            if (err->kind != RJ_PE_NONE) return;
             CUR.value = (intptr_t)s;
             ++ninstrs;
             break;
