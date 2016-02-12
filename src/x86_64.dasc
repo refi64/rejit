@@ -198,9 +198,15 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         *errpc = bk;
         break;
     case RJ_IDOT:
-        | movzx TMPD0, byte [STR]
-        | bt CONST, TMPD0
-        | jb =>*errpc
+        if (flags & RJ_FDOTALL) {
+            | mov TMPB, byte [STR]
+            | test TMPB, TMPB
+            | jz =>*errpc
+        } else {
+            | movzx TMPD0, byte [STR]
+            | bt CONST, TMPD0
+            | jb =>*errpc
+        }
         | inc STR
         break;
     case RJ_IBEGIN:
