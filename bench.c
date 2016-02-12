@@ -19,7 +19,7 @@ int bench(const char* regex, const char* s, int it) {
     int r;
     rejit_parse_error err;
     rejit_group* groups = NULL;
-    rejit_matcher m = rejit_parse_compile(regex, &err);
+    rejit_matcher m = rejit_parse_compile(regex, &err, RJ_FNONE);
     if (err.kind != RJ_PE_NONE) {
         fprintf(stderr, "Error compiling regex (pos: %zu)\n", err.pos);
         return 1;

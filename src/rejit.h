@@ -30,6 +30,12 @@ typedef enum {
        group. For RJ_ISET, value is const char*. */
 } rejit_instr_kind;
 
+typedef enum {
+    RJ_FNONE   = 1<<0,
+    RJ_FICASE  = 1<<1,
+    RJ_FDOTALL = 1<<2,
+} rejit_flags;
+
 typedef struct rejit_instruction_type {
     rejit_instr_kind kind;
     intptr_t value, value2;
@@ -71,9 +77,11 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err);
 void rejit_free_tokens(rejit_token_list tokens);
 rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err);
 void rejit_free_parse_result(rejit_parse_result res);
-rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups);
-rejit_matcher rejit_compile(rejit_parse_result res);
-rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err);
+rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
+                                   rejit_flags flags);
+rejit_matcher rejit_compile(rejit_parse_result res, rejit_flags flags);
+rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err,
+                                  rejit_flags flags);
 int rejit_match(rejit_matcher m, const char* str, rejit_group* groups);
 int rejit_search(rejit_matcher m, const char* str, const char** tgt,
                  rejit_group* groups);

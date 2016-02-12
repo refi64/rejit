@@ -282,7 +282,7 @@ LIBCUT_TEST(test_parse_other) {
 LIBCUT_TEST(test_chr) {
     // ca
     rejit_instruction instrs[] = {{RJ_IWORD, (intptr_t)"ca"}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "ca", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), -1);
@@ -293,7 +293,7 @@ LIBCUT_TEST(test_chr) {
 LIBCUT_TEST(test_dot) {
     // .
     rejit_instruction instrs[] = {{RJ_IDOT}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "\n", NULL), -1);
@@ -305,7 +305,7 @@ LIBCUT_TEST(test_plus) {
     rejit_instruction instrs[] = {{RJ_IPLUS}, {RJ_IWORD, (intptr_t)"c"},
                                   {RJ_INULL}};
     instrs[0].value = (intptr_t)&instrs[1];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "cc", NULL), 2);
@@ -315,7 +315,7 @@ LIBCUT_TEST(test_star) {
     // c*
     rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_IWORD, (intptr_t)"c"},
                                   {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 0);
     LIBCUT_TEST_EQ(rejit_match(m, "cc", NULL), 2);
@@ -327,7 +327,7 @@ LIBCUT_TEST(test_opt) {
     rejit_instruction instrs[] = {{RJ_IWORD, (intptr_t)"a"}, {RJ_IOPT},
                                   {RJ_IWORD, (intptr_t)"c"}, {RJ_IEND},
                                   {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "ac", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "g", NULL), -1);
@@ -338,7 +338,7 @@ LIBCUT_TEST(test_begin) {
     // c*^
     rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_IWORD, (intptr_t)"c"},
                                   {RJ_IBEGIN}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), 0);
     LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), -1);
 }
@@ -346,7 +346,7 @@ LIBCUT_TEST(test_begin) {
 LIBCUT_TEST(test_end) {
     // $
     rejit_instruction instrs[] = {{RJ_IEND}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), 0);
     LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), -1);
 }
@@ -355,7 +355,7 @@ LIBCUT_TEST(test_set) {
     // [xyz]
     char s[] = "\txyz\0    ";
     rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)s}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "\t", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "x", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "y", NULL), 1);
@@ -368,7 +368,7 @@ LIBCUT_TEST(test_nset) {
     // [^xyz]
     char s[] = "\txyz\0    ";
     rejit_instruction instrs[] = {{RJ_INSET, (intptr_t)s}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "\t", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "x", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "y", NULL), -1);
@@ -383,7 +383,7 @@ LIBCUT_TEST(test_or) {
                                   {RJ_IWORD, (intptr_t)"b"}, {RJ_INULL}};
     instrs[0].value = (intptr_t)&instrs[2];
     instrs[0].value2 = (intptr_t)&instrs[3];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "b", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
@@ -394,7 +394,7 @@ LIBCUT_TEST(test_group) {
     rejit_instruction instrs[] = {{RJ_IGROUP}, {RJ_IWORD, (intptr_t)"a"},
                                   {RJ_INULL}};
     instrs[0].value = (intptr_t)&instrs[2];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
 }
@@ -407,7 +407,7 @@ LIBCUT_TEST(test_cgroup) {
                                   {RJ_IOPT}, {RJ_ICGROUP, 0, 1},
                                   {RJ_IWORD, (intptr_t)"b"}, {RJ_INULL}};
     instrs[0].value = instrs[3].value = (intptr_t)&instrs[5];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
 
     memset(groups, 0, sizeof(groups));
     LIBCUT_TEST_EQ(rejit_match(m, str1, groups), 1);
@@ -436,7 +436,7 @@ LIBCUT_TEST(test_opt_group) {
     rejit_instruction instrs[] = {{RJ_IOPT}, {RJ_IGROUP},
                                   {RJ_IWORD, (intptr_t)"ab"}, {RJ_INULL}};
     instrs[1].value = (intptr_t)&instrs[3];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "ab", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 0);
     LIBCUT_TEST_EQ(rejit_match(m, "b", NULL), 0);
@@ -448,7 +448,7 @@ LIBCUT_TEST(test_star_group) {
     rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_IGROUP},
                                   {RJ_IWORD, (intptr_t)"ab"}, {RJ_INULL}};
     instrs[1].value = (intptr_t)&instrs[3];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "ab", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "abab", NULL), 4);
     LIBCUT_TEST_EQ(rejit_match(m, "ababab", NULL), 6);
@@ -462,7 +462,7 @@ LIBCUT_TEST(test_plus_group) {
     rejit_instruction instrs[] = {{RJ_IPLUS}, {RJ_IGROUP},
                                   {RJ_IWORD, (intptr_t)"ab"}, {RJ_INULL}};
     instrs[1].value = (intptr_t)&instrs[3];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "ab", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "abab", NULL), 4);
     LIBCUT_TEST_EQ(rejit_match(m, "ababab", NULL), 6);
@@ -479,7 +479,7 @@ LIBCUT_TEST(test_lookahead) {
                                   {RJ_INULL}};
     instrs[0].value = (intptr_t)&instrs[2];
     instrs[4].value = (intptr_t)&instrs[6];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "ab", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "abc", NULL), 3);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
@@ -492,7 +492,7 @@ LIBCUT_TEST(test_negative_lookahead) {
     rejit_instruction instrs[] = {{RJ_INLAHEAD}, {RJ_IWORD, (intptr_t)"ab"},
                                   {RJ_ISTAR}, {RJ_ISET, (intptr_t)s}, {RJ_INULL}};
     instrs[0].value = (intptr_t)&instrs[2];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "bb", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "aa", NULL), 2);
@@ -504,7 +504,7 @@ LIBCUT_TEST(test_mplus) {
     // .+?b
     rejit_instruction instrs[] = {{RJ_IMPLUS}, {RJ_IDOT},
                                   {RJ_IWORD, (intptr_t)"b"}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "abcb", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "b", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "abb", NULL), 2);
@@ -515,7 +515,7 @@ LIBCUT_TEST(test_mstar) {
     // .*?b
     rejit_instruction instrs[] = {{RJ_IMSTAR}, {RJ_IDOT},
                                   {RJ_IWORD, (intptr_t)"b"}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "abcb", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "b", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "abb", NULL), 2);
@@ -528,7 +528,7 @@ LIBCUT_TEST(test_or_mixed) {
                                   {RJ_IWORD, (intptr_t)"a"}, {RJ_INULL}};
     instrs[0].value = (intptr_t)&instrs[2];
     instrs[0].value2 = (intptr_t)&instrs[4];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "aaaa", NULL), 4);
     LIBCUT_TEST_EQ(rejit_match(m, "b", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), 0);
@@ -537,7 +537,7 @@ LIBCUT_TEST(test_or_mixed) {
 LIBCUT_TEST(test_search) {
     // a
     rejit_instruction instrs[] = {{RJ_IWORD, (intptr_t)"a"}, {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     const char* tgt;
     LIBCUT_TEST_EQ(rejit_search(m, "abc", &tgt, NULL), 1);
     LIBCUT_TEST_EQ(*tgt, 'c');
@@ -553,7 +553,7 @@ LIBCUT_TEST(test_set_and_dot) {
     const char s[] = "abc\0   ";
     rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)s}, {RJ_IDOT},
                                   {RJ_INULL}};
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "ad", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "bd", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "cd", NULL), 2);
@@ -570,7 +570,7 @@ LIBCUT_TEST(test_or_group) {
                                   {RJ_IWORD, (intptr_t)"c"}, {RJ_INULL}};
     instrs[0].value = instrs[1].value = (intptr_t)&instrs[3];
     instrs[0].value2 = (intptr_t)&instrs[4];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "ab", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "ac", NULL), -1);
@@ -585,7 +585,7 @@ LIBCUT_TEST(test_back) {
                                   {RJ_IWORD, (intptr_t)"e"}};
     rejit_group group;
     instrs[0].value = (intptr_t)&instrs[2];
-    rejit_matcher m = rejit_compile_instrs(instrs, 0);
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "abcdabce", &group), 8);
     LIBCUT_TEST_EQ(rejit_match(m, "abcdabe", &group), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "abdabe", &group), -1);
@@ -600,7 +600,7 @@ LIBCUT_TEST(test_misc) {
 
     group.begin = group.end = NULL;
 
-    m = rejit_parse_compile("[Oo]rgani[sz]ation", &err);
+    m = rejit_parse_compile("[Oo]rgani[sz]ation", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
     LIBCUT_TEST_EQ(rejit_match(m, "Organization", NULL), 12);
     LIBCUT_TEST_EQ(rejit_match(m, "Organisation", NULL), 12);
@@ -608,14 +608,14 @@ LIBCUT_TEST(test_misc) {
     LIBCUT_TEST_EQ(rejit_match(m, "organisation", NULL), 12);
     LIBCUT_TEST_EQ(rejit_match(m, "organizatio", NULL), -1);
 
-    m = rejit_parse_compile("hono(?:u)?r(?:able)?", &err);
+    m = rejit_parse_compile("hono(?:u)?r(?:able)?", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
     LIBCUT_TEST_EQ(rejit_match(m, "honor", NULL), 5);
     LIBCUT_TEST_EQ(rejit_match(m, "honour", NULL), 6);
     LIBCUT_TEST_EQ(rejit_match(m, "honorable", NULL), 9);
     LIBCUT_TEST_EQ(rejit_match(m, "honourable", NULL), 10);
 
-    m = rejit_parse_compile("a(b)?c", &err);
+    m = rejit_parse_compile("a(b)?c", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
     LIBCUT_TEST_EQ(m->groups, 1);
     LIBCUT_TEST_EQ(rejit_match(m, "abc", &group), 3);
@@ -626,7 +626,7 @@ LIBCUT_TEST(test_misc) {
     LIBCUT_TEST_EQ(group.begin, NULL);
     LIBCUT_TEST_EQ(group.end, NULL);
 
-    m = rejit_parse_compile("[ÁÃa]b", &err);
+    m = rejit_parse_compile("[ÁÃa]b", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
     LIBCUT_TEST_EQ(m->groups, 0);
     LIBCUT_TEST_NE(rejit_match(m, "Áb", NULL), -1);
