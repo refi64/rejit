@@ -315,7 +315,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             break;
         case RJ_TBACK:
             CUR.kind = RJ_IBACK;
-            CUR.value = t.pos[1] - '0';
+            CUR.value = t.pos[1] - '0' - 1;
             ++ninstrs;
             break;
         default:

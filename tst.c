@@ -288,10 +288,10 @@ LIBCUT_TEST(test_parse_other) {
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value, "a");
 
     LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_IBACK);
-    LIBCUT_TEST_EQ(res.instrs[1].value, 1);
+    LIBCUT_TEST_EQ(res.instrs[1].value, 0);
 
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_IBACK);
-    LIBCUT_TEST_EQ(res.instrs[2].value, 5);
+    LIBCUT_TEST_EQ(res.instrs[2].value, 4);
 
     LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_IWORD);
     LIBCUT_TEST_STREQ((char*)res.instrs[3].value, "b");
