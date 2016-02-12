@@ -673,6 +673,19 @@ LIBCUT_TEST(test_misc) {
     LIBCUT_TEST_NE(rejit_match(m, "ab", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "Âb", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "b", NULL), -1);
+
+    m = rejit_parse_compile("(?i)a", &err, RJ_FNONE);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+    LIBCUT_TEST_EQ(m->groups, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "A", NULL), 1);
+
+    m = rejit_parse_compile("(?s).", &err, RJ_FNONE);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+    LIBCUT_TEST_EQ(m->groups, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "\n", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
 }
 
 LIBCUT_MAIN(
