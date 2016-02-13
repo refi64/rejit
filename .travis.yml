@@ -6,7 +6,7 @@ install:
     - "cd luabitop && make CFLAGS=`pkg-config --cflags lua5.2` && cd .."
 script:
     - "fbuild/fbuild-light --cflag=-Ilibcut || cat build/fbuild.log && build/tst"
-    - "fbuild --clean"
+    - "fbuild/fbuild-light --clean"
     - "fbuild/fbuild-light --cflag=-Ilibcut --cflag=-m32 || cat build/fbuild.log && build/tst"
 addons:
     apt:
