@@ -3,6 +3,7 @@ install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
 script:
+    - "ls libcut"
     - "fbuild/fbuild-light --cflag=-Ilibcut && build/tst"
     - "fbuild/fbuild-light --cflag=-Ilibcut --cflag=-m32 && build/tst"
 addons:
@@ -10,3 +11,4 @@ addons:
         packages:
             - python3
             - lua5.2
+            - lua-bitopt
