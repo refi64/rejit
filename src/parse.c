@@ -233,7 +233,11 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             if (st.kind == RJ_TREP) {
                 char* ep;
                 CUR.value = strtol(st.pos+1, &ep, 10);
-                if (*ep != ',') {
+                if (*ep == '}') {
+                    CUR.value2 = CUR.value;
+                    goto out;
+                }
+                else if (*ep != ',') {
                     err->kind = RJ_PE_INT;
                     err->pos = ep - str;
                     return;
@@ -245,6 +249,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                     return;
                 }
             }
+            out:
             if (suffixes[i]+1 < tokens.len &&
                 tokens.tokens[suffixes[i]+1].kind == RJ_TQ && CUR.kind != RJ_IOPT)
                 CUR.kind += RJ_IMSTAR - RJ_ISTAR;
