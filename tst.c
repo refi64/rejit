@@ -662,7 +662,7 @@ LIBCUT_TEST(test_back) {
     // (abc)d\1e
     rejit_instruction instrs[] = {{RJ_ICGROUP}, {RJ_IWORD, (intptr_t)"abc"},
                                   {RJ_IWORD, (intptr_t)"d"}, {RJ_IBACK, 0},
-                                  {RJ_IWORD, (intptr_t)"e"}};
+                                  {RJ_IWORD, (intptr_t)"e"}, {RJ_INULL}};
     rejit_group group;
     instrs[0].value = (intptr_t)&instrs[2];
     rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
