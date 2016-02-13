@@ -1,6 +1,9 @@
 ReJit
 =====
 
+.. image:: https://travis-ci.org/kirbyfan64/rejit.svg?branch=master
+    :target: https://travis-ci.org/kirbyfan64/rejit
+
 ReJit is open-source regex engine with an embedded JIT. It currently supports most
 regular expression features (and even some that RE2 doesn't support, like
 backreferences). The only supported architectures at the moment are X86 and X64.
