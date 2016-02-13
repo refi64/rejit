@@ -9,3 +9,4 @@ addons:
     apt:
         packages:
             - python3
+            - lua5.2
