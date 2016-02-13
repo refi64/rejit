@@ -1,7 +1,7 @@
 language: c
 sudo: true
 before_install:
-    - "sudo apt-get install python3 lua5.2 liblua5.2-dev ia32-libs ia32-libs-multiarch"
+    - "sudo apt-get install python3 lua5.2 liblua5.2-dev program:i386"
 install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
