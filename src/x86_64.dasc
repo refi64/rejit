@@ -201,6 +201,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             unskip(ia);
         }
         *errpc = *pcl;
+        GROW;
         for (i=instr->value; i<instr->value2; ++i) {
             compile_one(Dst, ia, errpc, pcl, saved, flags);
             unskip(ia);
