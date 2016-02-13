@@ -1,7 +1,9 @@
 language: c
 sudo: true
 before_install:
-    - "sudo apt-get install python3 lua5.2 liblua5.2-dev lib32z1"
+    - "echo \"deb ftp.us.debian.org/debian wheezy main\" | sudo tee /etc/apt/sources.list"
+    - "sudo apt-get update"
+    - "sudo apt-get install python3 lua5.2 liblua5.2-dev ia32-libs-i386"
 install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
