@@ -14,6 +14,6 @@ addons:
             - python3
             - lua5.2
             - liblua5.2-dev
-            - ia32-libs
+            - ia32-libs-multiarch
 env:
     - "LUA_CPATH=$TRAVIS_BUILD_DIR/luabitop/?.so"
