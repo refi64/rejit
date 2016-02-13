@@ -5,3 +5,7 @@ install:
 script:
     - "fbuild/fbuild-light --cflag=-Ilibcut && build/tst"
     - "fbuild/fbuild-light --cflag=-Ilibcut --cflag=-m32 && build/tst"
+addons:
+    apt:
+        packages:
+            - python3
