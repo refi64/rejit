@@ -3,8 +3,7 @@ install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
 script:
-    - "ls libcut"
-    - "fbuild/fbuild-light --cflag=-Ilibcut && build/tst"
+    - "fbuild/fbuild-light --cflag=-Ilibcut || cat build/fbuild.log && build/tst"
     - "fbuild/fbuild-light --cflag=-Ilibcut --cflag=-m32 && build/tst"
 addons:
     apt:
