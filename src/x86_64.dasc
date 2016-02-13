@@ -34,28 +34,33 @@
 | .endmacro
 
 | .macro save
+|| {
 || if (saved < RED_ZONE_SIZE/8) {
 |      mov [rsp-8*(saved+1)], STR
 ||     needs_unsave = 0;
-|| }
-|| else {
+|| } else {
 |      push STR
 ||     needs_unsave = 1;
+|| }
 || }
 | .endmacro
 
 | .macro gsave
+|| {
 || if (needs_unsave)
 |      mov STR, TOS
 || else
 |      mov STR, [rsp-8*(saved+1)]
+|| }
 | .endmacro
 
 | .macro rstsave
+|| {
 || if (needs_unsave)
 |       pop STR
 || else
 |       mov STR, [rsp-8*(saved+1)]
+|| }
 | .endmacro
 
 | .else
@@ -359,8 +364,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         *errpc = bk = *pcl;
         GROW;
         if (instr->kind != RJ_INLAHEAD) GROW;
-        | save
-        for (ia = instr+1; ia != (rejit_instruction*)instr->value; ++ia) {
+        ia = instr+1;
+        ib = (rejit_instruction*)instr->value;
+        // Whether or not saves can be eliminated.
+        i = instr->kind == RJ_IGROUP && ia+1 == ib && ia->kind == RJ_IWORD;
+        if (!i)
+            | save
+        for (; ia != ib; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, flags);
             skip(ia);
         }
@@ -372,7 +382,8 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | jmp =>bk+1
         }
         |=>bk:
-        | rstsave
+        if (!i)
+            | rstsave
         if (instr->kind != RJ_INLAHEAD) {
             | jmp =>*errpc
             |=>bk+1:
@@ -391,7 +402,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
 
         if (instr->kind == RJ_ILAHEAD)
             | rstsave
-        else if (instr->kind != RJ_INLAHEAD)
+        else if (instr->kind != RJ_INLAHEAD && !i)
             | unsave
 
         if (instr->kind == RJ_ICGROUP) {
