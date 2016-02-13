@@ -3,5 +3,5 @@ install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
 script:
-    - "fbuild --cflag=-Ilibcut && build/tst"
-    - "fbuild --cflag=-Ilibcut --cflag=-m32 && build/tst"
+    - "fbuild/fbuild-light --cflag=-Ilibcut && build/tst"
+    - "fbuild/fbuild-light --cflag=-Ilibcut --cflag=-m32 && build/tst"
