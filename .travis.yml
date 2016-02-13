@@ -1,11 +1,15 @@
 language: c
 sudo: true
 before_install:
-    - "sudo apt-get install python3 lua5.2 liblua5.2-dev lua-bitop ia32-libs"
+    - "sudo apt-get install python3 lua5.2 liblua5.2-dev ia32-libs ia32-libs-multiarch"
 install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
+    - "git clone https://github.com/LuaDist/luabitop.git"
+    - "cd luabitop && make CFLAGS=`pkg-config --cflags lua5.2` && cd .."
 script:
     - "fbuild/fbuild-light --cflag=-Ilibcut || cat build/fbuild.log && build/tst"
     - "fbuild/fbuild-light --clean"
     - "fbuild/fbuild-light --cflag=-Ilibcut --cflag=-m32 || cat build/fbuild.log && build/tst"
+env:
+    - "LUA_CPATH=$TRAVIS_BUILD_DIR/luabitop/?.so"
