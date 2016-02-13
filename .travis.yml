@@ -2,6 +2,8 @@ language: c
 install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
+    - "git clone https://github.com/LuaDist/luabitop.git"
+    - "cd luabitop && make CFLAGS=`pkg-config --cflags lua5.2`"
 script:
     - "fbuild/fbuild-light --cflag=-Ilibcut || cat build/fbuild.log && build/tst"
     - "fbuild/fbuild-light --cflag=-Ilibcut --cflag=-m32 && build/tst"
@@ -10,4 +12,6 @@ addons:
         packages:
             - python3
             - lua5.2
-            - lua-bitopt
+            - liblua5.2-dev
+env:
+    - "LUA_CPATH=$TRAVIS_BUILD_DIR/luabitop/?.so"
