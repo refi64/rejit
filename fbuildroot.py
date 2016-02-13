@@ -73,7 +73,11 @@ def configure(ctx):
         kw['debug'] = True
         kw['macros'] = ['DEBUG']
 
-    c = guess_static(ctx, exe=ctx.options.cc, flags=flags, includes=['utf'], **kw)
+    c = guess_static(ctx, exe=ctx.options.cc, flags=flags, includes=['utf'],
+        platform_options=[
+            ({'posix'}, {'external_libs+': ['rt']})
+        ],
+        **kw)
     arch = get_target_arch(ctx, c)
     if arch == 'x86_64':
         defs.append('X64')
