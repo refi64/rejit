@@ -64,7 +64,13 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
             if (isdigit(str[1])) {
                 tkind = RJ_TBACK;
                 len = 2;
-            } else escaped = 1;
+            } else switch (str[1]) {
+            case 's': case 'S': case 'w': case 'W': case 'd': case 'D':
+                tkind = RJ_TMS;
+                ++len;
+                break;
+            default: escaped = 1; break;
+            }
             break;
         default: break;
         }
@@ -159,8 +165,10 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
     }
 }
 
-/* static char alphas[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"; */
-/* static char digits[] = "0123456789"; */
+static char dset[] = "0123456789";
+static char wset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                     "0123456789_";
+static char sset[] = " \t\n\r\f\v";
 
 static char* expand_set(const char* str, const char* set, size_t len,
                         rejit_parse_error* err) {
@@ -333,6 +341,17 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             s = expand_set(str, t.pos+1, t.len-2, err);
             if (err->kind != RJ_PE_NONE) return;
             CUR.value = (intptr_t)s;
+            ++ninstrs;
+            break;
+        case RJ_TMS:
+            CUR.kind = isupper(t.pos[1]) ? RJ_INSET : RJ_ISET;
+            switch (t.pos[1]) {
+            #define T(l,c,n) case l: case c: s = n##set; break;
+            T('s', 'S', s)
+            T('w', 'W', w)
+            T('d', 'D', d)
+            }
+            CUR.value = (intptr_t)expand_set(NULL, s, strlen(s), NULL);
             ++ninstrs;
             break;
         case RJ_TBACK:

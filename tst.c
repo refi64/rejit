@@ -209,6 +209,20 @@ LIBCUT_TEST(test_parse_set) {
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value+37,
                       "                                    ");
 
+    PARSE("\\w")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ISET);
+    LIBCUT_TEST_STREQ((char*)res.instrs[0].value,
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                      "0123456789_");
+
+    PARSE("\\W")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INSET);
+    LIBCUT_TEST_STREQ((char*)res.instrs[0].value,
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                      "0123456789_");
+
     PARSE("[^a-z0-9]")
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INSET);
