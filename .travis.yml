@@ -1,5 +1,5 @@
 language: c
-sudo: false
+sudo: true
 before_install:
     - "sudo apt-get install python3 lua5.2 liblua5.2-dev lua-bitop ia32-libs"
 install:
