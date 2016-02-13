@@ -1,7 +1,7 @@
 language: c
 sudo: true
 before_install:
-    - "echo \"deb ftp.us.debian.org/debian wheezy main\" | sudo tee /etc/apt/sources.list"
+    - "sudo sh -c 'echo \"deb ftp.us.debian.org/debian wheezy main\" >> /etc/apt/sources.list'"
     - "sudo apt-get update"
     - "sudo apt-get install python3 lua5.2 liblua5.2-dev ia32-libs-i386"
 install:
