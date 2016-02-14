@@ -31,9 +31,6 @@ Just run::
    
    $ fbuild
 
-Note that building in release mode (via ``--release``) does NOT work at the
-moment (see `this issue <https://github.com/kirbyfan64/rejit/issues/1>`_).
-
 Usage
 *****
 
