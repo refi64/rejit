@@ -77,6 +77,7 @@ def configure(ctx):
         platform_options=[
             ({'posix'}, {'external_libs+': ['rt']}),
             ({'gcc'}, {'flags+': ['-Wno-maybe-uninitialized']}),
+            ({'clang'}, {'flags+': ['-Wno-unknown-warning-option']}),
         ],
         **kw)
     arch = get_target_arch(ctx, c)
