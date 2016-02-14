@@ -126,9 +126,12 @@
 
 static void compile_prolog(dasm_State** Dst) {
     | .if not X64
-    | mov STR, [esp+4]
-    | mov GR, [esp+8]
+    | push edi
     | push ebp
+    | push ebx
+    // Add offsets of just-pushed vars to arg offsets.
+    | mov STR, [esp+16]
+    | mov GR, [esp+20]
     | .endif
     | backup
     | mov CONST, 1025
@@ -139,14 +142,18 @@ static void compile_epilog(dasm_State** Dst) {
     | sub RET, SAV
     | ubackup
     | .if not X64
+    | pop ebx
     | pop ebp
+    | pop edi
     | .endif
     | ret
     |=>0:
     | mov RET, -1
     | ubackup
     | .if not X64
+    | pop ebx
     | pop ebp
+    | pop edi
     | .endif
     | ret
 }
