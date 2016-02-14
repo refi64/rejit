@@ -75,7 +75,8 @@ def configure(ctx):
 
     c = guess_static(ctx, exe=ctx.options.cc, flags=flags, includes=['utf'],
         platform_options=[
-            ({'posix'}, {'external_libs+': ['rt']})
+            ({'posix'}, {'external_libs+': ['rt']}),
+            ({'gcc'}, {'flags+': ['-Wno-maybe-uninitialized']}),
         ],
         **kw)
     arch = get_target_arch(ctx, c)
