@@ -95,8 +95,10 @@
 | .endmacro
 
 | .macro save
+|| {
 || needs_unsave = 1;
 |  push STR
+|| }
 | .endmacro
 
 | .macro gsave
