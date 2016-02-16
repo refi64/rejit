@@ -628,6 +628,36 @@ LIBCUT_TEST(test_search) {
     LIBCUT_TEST_EQ((void*)tgt, NULL);
 }
 
+LIBCUT_TEST(test_match_len) {
+    rejit_instruction instrs[3];
+    rejit_instruction* ia = &instrs[0], *ib = &instrs[1], *ic = &instrs[2];
+
+    ib->kind = RJ_IWORD;
+    ib->value = (intptr_t)"abc123";
+    LIBCUT_TEST_EQ(rejit_match_len(ib), 6);
+
+    ic->kind = RJ_ISET;
+    ic->value = (intptr_t)"abc   ";
+    LIBCUT_TEST_EQ(rejit_match_len(ic), 1);
+
+    ia->kind = RJ_IPLUS;
+    LIBCUT_TEST_EQ(rejit_match_len(ia), -1);
+
+    ia->kind = RJ_ISTAR;
+    LIBCUT_TEST_EQ(rejit_match_len(ia), -1);
+
+    ia->kind = RJ_IREP;
+    ia->value = 2;
+    ia->value2 = 5;
+    LIBCUT_TEST_EQ(rejit_match_len(ia), -1);
+    ia->value2 = 2;
+    LIBCUT_TEST_EQ(rejit_match_len(ia), 12);
+
+    ia->kind = RJ_IGROUP;
+    ia->value = (intptr_t)ic;
+    LIBCUT_TEST_EQ(rejit_match_len(ia), 6);
+}
+
 LIBCUT_TEST(test_set_and_dot) {
     // [abc].
     char s[] = "abc\0   ";
@@ -788,6 +818,6 @@ LIBCUT_MAIN(
     test_set_and_dot, test_or_group, test_back, test_dotall, test_icase_word,
     test_icase_set,
 
-    test_search,
+    test_search, test_match_len,
 
     test_misc)

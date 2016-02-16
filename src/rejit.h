@@ -81,6 +81,7 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err);
 void rejit_free_tokens(rejit_token_list tokens);
 rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err);
 void rejit_free_parse_result(rejit_parse_result res);
+int rejit_match_len(rejit_instruction* instr);
 rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
                                    rejit_flags flags);
 rejit_matcher rejit_compile(rejit_parse_result res, rejit_flags flags);
