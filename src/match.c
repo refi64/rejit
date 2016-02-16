@@ -61,27 +61,36 @@ static unsigned long genmagic(char* s, char* min, size_t* len, int icase) {
 int rejit_match_len(rejit_instruction* instr) {
     rejit_instruction* ia;
     int a=0, b=0;
+    instr->len_from = NULL;
     switch (instr->kind) {
     case RJ_IWORD: return strlen((char*)instr->value);
     case RJ_ISET: case RJ_INSET: case RJ_IDOT: return 1;
     case RJ_IOPT: case RJ_ISTAR: case RJ_IMSTAR: case RJ_IPLUS: case RJ_IMPLUS:
         return -1;
     case RJ_IREP:
-        a = rejit_match_len(instr+1);
+        ia = instr+1;
+        a = rejit_match_len(ia);
+        ia->len_from = instr;
         return instr->value == instr->value2 && a != -1
                ? a * instr->value
                : -1;
     case RJ_ILAHEAD: case RJ_INLAHEAD: case RJ_ILBEHIND: case RJ_IBEGIN:
     case RJ_IEND: return 0;
     case RJ_IGROUP: case RJ_ICGROUP:
-        for (ia = instr+1; ia != (rejit_instruction*)instr->value; ++ia)
+        for (ia = instr+1; ia != (rejit_instruction*)instr->value; ++ia) {
             a += rejit_match_len(ia);
+            ia->len_from = instr;
+        }
         return a;
     case RJ_IOR:
-        for (ia = instr+1; ia != (rejit_instruction*)instr->value; ++ia)
+        for (ia = instr+1; ia != (rejit_instruction*)instr->value; ++ia) {
             a += rejit_match_len(ia);
-        for (; ia != (rejit_instruction*)instr->value2; ++ia)
+            ia->len_from = instr;
+        }
+        for (; ia != (rejit_instruction*)instr->value2; ++ia) {
             b += rejit_match_len(ia);
+            ia->len_from = instr;
+        }
         return a == b ? a : -1;
     case RJ_IBACK: return -1; // XXX
     case RJ_INULL: case RJ_ISKIP: case RJ_IARG: case RJ_IVARG:

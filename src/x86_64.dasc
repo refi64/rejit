@@ -373,7 +373,8 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         if (instr->kind == RJ_ILBEHIND) {
             len = 0;
             for (; ia != ib; ++ia) {
-                if (ia->len == -1) {
+                if (ia->len_from && ia->len_from != instr) continue;
+                else if (ia->len == -1) {
                     len = -1;
                     break;
                 } else len += ia->len;

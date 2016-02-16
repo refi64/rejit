@@ -41,6 +41,7 @@ typedef struct rejit_instruction_type {
     rejit_instr_kind kind;
     intptr_t value, value2;
     size_t len;
+    struct rejit_instruction_type* len_from;
 } rejit_instruction;
 
 typedef struct rejit_token_type {

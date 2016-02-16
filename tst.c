@@ -835,6 +835,11 @@ LIBCUT_TEST(test_misc) {
     LIBCUT_TEST_EQ(rejit_match(m, "aa", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "aaa", NULL), 3);
     LIBCUT_TEST_EQ(rejit_match(m, "aaaa", NULL), 3);
+
+    m = rejit_parse_compile("aa(?<=a{2})b", &err, RJ_FNONE);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+    LIBCUT_TEST_EQ(m->groups, 0);
+    LIBCUT_TEST_EQ(rejit_match(m, "aab", NULL), 3);
 }
 
 LIBCUT_MAIN(
