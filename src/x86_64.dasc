@@ -364,15 +364,33 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IGROUP:
     case RJ_ILAHEAD:
     case RJ_INLAHEAD:
+    case RJ_ILBEHIND:
         *errpc = bk = *pcl;
         GROW;
         if (instr->kind != RJ_INLAHEAD) GROW;
         ia = instr+1;
         ib = (rejit_instruction*)instr->value;
+        if (instr->kind == RJ_ILBEHIND) {
+            len = 0;
+            for (; ia != ib; ++ia) {
+                i = rejit_match_len(ia);
+                if (i == -1) {
+                    len = -1;
+                    break;
+                } else len += rejit_match_len(ia);
+            }
+            ia = instr+1;
+        }
         // Whether or not saves can be eliminated.
-        i = instr->kind == RJ_IGROUP && ia+1 == ib && ia->kind == RJ_IWORD;
+        i = (instr->kind == RJ_IGROUP || (instr->kind == RJ_ILBEHIND && len <= 0))
+            && ia+1 == ib && ia->kind == RJ_IWORD;
         if (!i)
             | save
+        if (instr->kind == RJ_ILBEHIND && len > 0) {
+            | sub STR, len
+            | cmp STR, SAV
+            | jl =>ebk
+        }
         for (; ia != ib; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, flags);
             skip(ia);
@@ -403,7 +421,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             }
         }
 
-        if (instr->kind == RJ_ILAHEAD)
+        if (instr->kind == RJ_ILAHEAD || instr->kind == RJ_ILBEHIND)
             | rstsave
         else if (instr->kind != RJ_INLAHEAD && !i)
             | unsave

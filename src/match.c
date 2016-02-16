@@ -70,7 +70,8 @@ int rejit_match_len(rejit_instruction* instr) {
         return instr->value == instr->value2 && a != -1
                ? a * instr->value
                : -1;
-    case RJ_ILAHEAD: case RJ_INLAHEAD: case RJ_IBEGIN: case RJ_IEND: return 0;
+    case RJ_ILAHEAD: case RJ_INLAHEAD: case RJ_ILBEHIND: case RJ_IBEGIN:
+    case RJ_IEND: return 0;
     case RJ_IGROUP: case RJ_ICGROUP:
         for (ia = instr+1; ia != (rejit_instruction*)instr->value; ++ia)
             a += rejit_match_len(ia);
