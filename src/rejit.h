@@ -40,6 +40,7 @@ typedef enum {
 typedef struct rejit_instruction_type {
     rejit_instr_kind kind;
     intptr_t value, value2;
+    size_t len;
 } rejit_instruction;
 
 typedef struct rejit_token_type {

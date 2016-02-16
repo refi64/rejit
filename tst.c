@@ -583,7 +583,7 @@ LIBCUT_TEST(test_negative_lookahead) {
 LIBCUT_TEST(test_lookbehind) {
     // a*(?<=a)bc
     rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_IWORD, (intptr_t)"a"},
-                                  {RJ_ILBEHIND}, {RJ_IWORD, (intptr_t)"a"},
+                                  {RJ_ILBEHIND}, {RJ_IWORD, (intptr_t)"a", 0, 1},
                                   {RJ_IWORD, (intptr_t)"bc"}, {RJ_INULL}};
     instrs[2].value = (intptr_t)&instrs[4];
     rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
