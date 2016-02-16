@@ -20,6 +20,7 @@ rejit_matcher compile(char* regex) {
         case RJ_PE_OVFLOW: ERR("too many nested parentheses"); break;
         case RJ_PE_RANGE: ERR("invalid character range"); break;
         case RJ_PE_INT: ERR("expected integer"); break;
+        case RJ_PE_LBVAR: ERR("lookbehind cannot be variable-length"); break;
         case RJ_PE_MEM: ERR("out of memory"); break;
         }
         ERR("\n");

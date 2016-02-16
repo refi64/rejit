@@ -73,6 +73,7 @@ typedef struct rejit_parse_error_type {
         RJ_PE_OVFLOW, // Stack overflow (too many nested parens).
         RJ_PE_RANGE,  // Bad character range.
         RJ_PE_INT,    // Expected an integer.
+        RJ_PE_LBVAR,  // Lookbehind contains variable-length expression.
         RJ_PE_MEM,    // Out of memory.
     } kind;
     size_t pos;

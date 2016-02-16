@@ -218,7 +218,7 @@ static char* expand_set(const char* str, const char* set, size_t len,
 
 static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   pipe* pipes, rejit_parse_result* res, rejit_parse_error* err) {
-    size_t i, ninstrs = 0, sl;
+    size_t i, ninstrs = 0, sl, lbh = 0;
     STACK(rejit_instruction*) st;
     STACK(pipe) pst;
     char* s;
@@ -231,6 +231,14 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
     });
 
     #define CUR res->instrs[ninstrs]
+    #define LBH(t,i) do {\
+        if (lbh)\
+            if (((i)->len = rejit_match_len(i)) == -1) {\
+                err->kind = RJ_PE_LBVAR;\
+                err->pos = (t).pos - str;\
+                return;\
+            }\
+    } while (0)
 
     for (i=0; i<tokens.len; ++i) {
         rejit_token t = tokens.tokens[i];
@@ -261,11 +269,14 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             if (suffixes[i]+1 < tokens.len &&
                 tokens.tokens[suffixes[i]+1].kind == RJ_TQ && CUR.kind != RJ_IOPT)
                 CUR.kind += RJ_IMSTAR - RJ_ISTAR;
+            LBH(t, &CUR);
             ++ninstrs;
         } else if (pst.len && i == TOS(pst).mid)
             TOS(pst).instr->value = (intptr_t)&CUR;
-        else if (pst.len && i == TOS(pst).end)
+        else if (pst.len && i == TOS(pst).end) {
+            LBH(tokens.tokens[TOS(pst).mid], TOS(pst).instr);
             POP(pst).instr->value2 = (intptr_t)&CUR;
+        }
 
         if (pipes[i].mid != -1) {
             CUR.kind = RJ_IOR;
@@ -285,14 +296,17 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             memcpy(s, t.pos, t.len);
             s[t.len] = 0;
             CUR.value = (intptr_t)s;
+            CUR.len = t.len;
             ++ninstrs;
             break;
         case RJ_TCARET: case RJ_TDOLLAR:
             CUR.kind = RJ_IEND - (RJ_TDOLLAR - t.kind);
+            CUR.len = 0;
             ++ninstrs;
             break;
         case RJ_TDOT:
             CUR.kind = RJ_IDOT;
+            CUR.len = 1;
             ++ninstrs;
             break;
         case RJ_TLP:
@@ -334,6 +348,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 err->pos = t.pos - str;
                 return;
             }
+            LBH(t, TOS(st));
             POP(st)->value = (intptr_t)&CUR;
             break;
         case RJ_TSET:
@@ -341,6 +356,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             s = expand_set(str, t.pos+1, t.len-2, err);
             if (err->kind != RJ_PE_NONE) return;
             CUR.value = (intptr_t)s;
+            CUR.len = 1;
             ++ninstrs;
             break;
         case RJ_TMS:
@@ -352,11 +368,13 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             T('d', 'D', d)
             }
             CUR.value = (intptr_t)expand_set(NULL, s, strlen(s), NULL);
+            CUR.len = 1;
             ++ninstrs;
             break;
         case RJ_TBACK:
             CUR.kind = RJ_IBACK;
             CUR.value = t.pos[1] - '0' - 1;
+            LBH(t, &CUR);
             ++ninstrs;
             break;
         default:
