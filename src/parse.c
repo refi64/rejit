@@ -218,7 +218,7 @@ static char* expand_set(const char* str, const char* set, size_t len,
 
 static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                   pipe* pipes, rejit_parse_result* res, rejit_parse_error* err) {
-    size_t i, ninstrs = 0, sl, lbh = 0;
+    size_t i, ninstrs = 0, sl, lbh = 0, lb_later = 0;
     STACK(rejit_instruction*) st;
     STACK(pipe) pst;
     char* s;
@@ -242,12 +242,14 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
 
     for (i=0; i<tokens.len; ++i) {
         rejit_token t = tokens.tokens[i];
+        lb_later = 0;
 
         if (suffixes[i] != -1) {
             rejit_token st = tokens.tokens[suffixes[i]];
             CUR.kind = st.kind - RJ_TSTAR + RJ_ISTAR;
             if (st.kind == RJ_TREP) {
                 char* ep;
+                lb_later = 1;
                 CUR.value = strtol(st.pos+1, &ep, 10);
                 if (*ep == '}') {
                     CUR.value2 = CUR.value;
@@ -269,7 +271,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             if (suffixes[i]+1 < tokens.len &&
                 tokens.tokens[suffixes[i]+1].kind == RJ_TQ && CUR.kind != RJ_IOPT)
                 CUR.kind += RJ_IMSTAR - RJ_ISTAR;
-            LBH(t, &CUR);
+            if (!lb_later) LBH(st, &CUR);
             ++ninstrs;
         } else if (pst.len && i == TOS(pst).mid)
             TOS(pst).instr->value = (intptr_t)&CUR;
@@ -322,6 +324,19 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             M(':', GROUP)
             else M('=', LAHEAD)
             else M('!', NLAHEAD)
+            else if (C && *tokens.tokens[i+2].pos == '<') {
+                rejit_token* wt = &tokens.tokens[i+2];
+                switch (wt->pos[1]) {
+                case '=': CUR.kind = RJ_ILBEHIND; break;
+                default:
+                    err->kind = RJ_PE_SYNTAX;
+                    err->pos = wt->pos - str + 1;
+                    return;
+                }
+                ++lbh;
+                wt->pos += 2;
+                wt->len -= 2;
+            }
             else if (C && i+3 < tokens.len && tokens.tokens[i+3].kind == RJ_TRP) {
                 int j;
                 t = tokens.tokens[i+2];
@@ -349,6 +364,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 return;
             }
             LBH(t, TOS(st));
+            if (TOS(st)->kind == RJ_ILBEHIND) --lbh;
             POP(st)->value = (intptr_t)&CUR;
             break;
         case RJ_TSET:
@@ -380,6 +396,8 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
         default:
             assert(t.kind >= RJ_TP);
         }
+
+        if (lb_later) LBH(t, &res->instrs[ninstrs-2]);
     }
 
     CUR.kind = RJ_INULL;

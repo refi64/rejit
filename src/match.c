@@ -65,6 +65,7 @@ int rejit_match_len(rejit_instruction* instr) {
     case RJ_IWORD: return strlen((char*)instr->value);
     case RJ_ISET: case RJ_INSET: case RJ_IDOT: return 1;
     case RJ_IOPT: case RJ_ISTAR: case RJ_IMSTAR: case RJ_IPLUS: case RJ_IMPLUS:
+        return -1;
     case RJ_IREP:
         a = rejit_match_len(instr+1);
         return instr->value == instr->value2 && a != -1
@@ -83,7 +84,10 @@ int rejit_match_len(rejit_instruction* instr) {
             b += rejit_match_len(ia);
         return a == b ? a : -1;
     case RJ_IBACK: return -1; // XXX
-    case RJ_INULL: case RJ_ISKIP: case RJ_IARG: case RJ_IVARG: abort();
+    case RJ_INULL: case RJ_ISKIP: case RJ_IARG: case RJ_IVARG:
+        fprintf(stderr, "invalid kind %d given to rejit_match_len\n",
+                instr->kind);
+        abort();
     }
 }
 
