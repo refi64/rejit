@@ -322,6 +322,16 @@ LIBCUT_TEST(test_parse_lookbehind) {
 
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
+    PARSE("(?<!ab)")
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INLBEHIND);
+    LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_IWORD);
+    LIBCUT_TEST_STREQ((char*)res.instrs[1].value, "ab");
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
+
     rejit_parse("(?<=a*)", &err);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_LBVAR);
     LIBCUT_TEST_EQ(err.pos, 5);
@@ -612,6 +622,20 @@ LIBCUT_TEST(test_lookbehind) {
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), -1);
 }
 
+LIBCUT_TEST(test_negative_lookbehind) {
+    // [ab]*(?<!a)c
+    const char s[] = "ab\0  ";
+    rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_ISET, (intptr_t)s},
+                                  {RJ_INLBEHIND}, {RJ_IWORD, (intptr_t)"a", 0, 1},
+                                  {RJ_IWORD, (intptr_t)"c"}, {RJ_INULL}};
+    instrs[2].value = (intptr_t)&instrs[4];
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
+    LIBCUT_TEST_EQ(rejit_match(m, "aaabc", NULL), 5);
+    LIBCUT_TEST_EQ(rejit_match(m, "bc", NULL), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "ac", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "bbaabac", NULL), -1);
+}
+
 LIBCUT_TEST(test_mplus) {
     // .+?b
     rejit_instruction instrs[] = {{RJ_IMPLUS}, {RJ_IDOT},
@@ -852,9 +876,9 @@ LIBCUT_MAIN(
     test_chr, test_dot, test_plus, test_star, test_opt, test_rep, test_begin,
     test_end, test_set, test_nset, test_or, test_group, test_cgroup,
     test_opt_group, test_star_group, test_plus_group, test_lookahead,
-    test_negative_lookahead, test_lookbehind, test_mplus, test_mstar,
-    test_or_mixed, test_set_and_dot, test_or_group, test_back, test_dotall,
-    test_icase_word, test_icase_set,
+    test_negative_lookahead, test_lookbehind, test_negative_lookbehind,
+    test_mplus, test_mstar, test_or_mixed, test_set_and_dot, test_or_group,
+    test_back, test_dotall, test_icase_word, test_icase_set,
 
     test_search, test_match_len,
 

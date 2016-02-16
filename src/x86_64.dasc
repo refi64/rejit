@@ -365,12 +365,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_ILAHEAD:
     case RJ_INLAHEAD:
     case RJ_ILBEHIND:
+    case RJ_INLBEHIND:
         *errpc = bk = *pcl;
         GROW;
-        if (instr->kind != RJ_INLAHEAD) GROW;
+        if (instr->kind != RJ_INLAHEAD && instr->kind != RJ_INLBEHIND) GROW;
         ia = instr+1;
         ib = (rejit_instruction*)instr->value;
-        if (instr->kind == RJ_ILBEHIND) {
+        if (instr->kind == RJ_ILBEHIND || instr->kind == RJ_INLBEHIND) {
             len = 0;
             for (; ia != ib; ++ia) {
                 if (ia->len_from && ia->len_from != instr) continue;
@@ -386,17 +387,21 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             && ia+1 == ib && ia->kind == RJ_IWORD;
         if (!i)
             | save
-        if (instr->kind == RJ_ILBEHIND && len > 0) {
+        if ((instr->kind == RJ_ILBEHIND || instr->kind == RJ_INLBEHIND) &&
+            len > 0) {
             | sub STR, len
             | cmp STR, SAV
-            | jl =>ebk
+            if (instr->kind == RJ_ILBEHIND)
+                | jl =>ebk
+            else
+                | jl =>bk
         }
         for (; ia != ib; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, flags);
             skip(ia);
         }
         *errpc = ebk;
-        if (instr->kind == RJ_INLAHEAD) {
+        if (instr->kind == RJ_INLAHEAD || instr->kind == RJ_INLBEHIND) {
             | rstsave
             | jmp =>*errpc
         } else {
@@ -405,7 +410,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         |=>bk:
         if (!i)
             | rstsave
-        if (instr->kind != RJ_INLAHEAD) {
+        if (instr->kind != RJ_INLAHEAD && instr->kind != RJ_INLBEHIND) {
             | jmp =>*errpc
             |=>bk+1:
         }
@@ -423,7 +428,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
 
         if (instr->kind == RJ_ILAHEAD || instr->kind == RJ_ILBEHIND)
             | rstsave
-        else if (instr->kind != RJ_INLAHEAD && !i)
+        else if (instr->kind != RJ_INLAHEAD && instr->kind != RJ_INLBEHIND && !i)
             | unsave
 
         if (instr->kind == RJ_ICGROUP) {

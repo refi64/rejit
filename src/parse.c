@@ -328,6 +328,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 rejit_token* wt = &tokens.tokens[i+2];
                 switch (wt->pos[1]) {
                 case '=': CUR.kind = RJ_ILBEHIND; break;
+                case '!': CUR.kind = RJ_INLBEHIND; break;
                 default:
                     err->kind = RJ_PE_SYNTAX;
                     err->pos = wt->pos - str + 1;
