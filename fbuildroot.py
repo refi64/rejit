@@ -4,6 +4,7 @@
 from fbuild.builders.c import guess_static
 from fbuild.builders import find_program
 from fbuild.config import c as c_test
+from fbuild.target import register
 from fbuild.record import Record
 from fbuild.path import Path
 import fbuild.db
@@ -57,6 +58,17 @@ def get_target_arch(ctx, c):
     ctx.logger.passed('ok ' + arch)
     return arch
 
+def find_headerdoc(ctx):
+    try:
+        headerdoc2html = find_program(ctx, ['headerdoc2html'])
+        gatherheaderdoc = find_program(ctx, ['gatherheaderdoc'])
+    except fbuild.ConfigFailed:
+        ctx.logger.failed('cannot find headerdoc; will not generate docs')
+        return None
+    else:
+        return Record(headerdoc2html=headerdoc2html,
+                      gatherheaderdoc=gatherheaderdoc)
+
 @fbuild.db.caches
 def configure(ctx):
     flags = ['-Wall', '-Werror']+ctx.options.cflag
@@ -98,7 +110,11 @@ def configure(ctx):
     else:
         ctx.logger.failed('cannot find libcut.h; will not build tests')
         tests = False
-    return Record(dasm=dasm, c=c, arch=arch, tests=tests, testflags=testflags)
+
+    headerdoc = find_headerdoc(ctx)
+
+    return Record(dasm=dasm, c=c, arch=arch, tests=tests, testflags=testflags,
+                  headerdoc=headerdoc)
 
 def build(ctx):
     rec = configure(ctx)
@@ -110,3 +126,14 @@ def build(ctx):
     if rec.tests:
         rec.c.build_exe('tst', ['tst.c'], includes=['src'], cflags=rec.testflags,
                         libs=[rejit])
+
+@register()
+def docs(ctx):
+    rec = configure(ctx)
+    output = ctx.buildroot / 'docs'
+    rejit_h = Path('src/rejit.h')
+
+    ctx.execute([rec.headerdoc.headerdoc2html, '-o', output, rejit_h],
+                'headerdoc2html', '%s -> %s' % (rejit_h, output), color='compile')
+    ctx.execute([rec.headerdoc.gatherheaderdoc, output], 'gatherheaderdoc',
+                output, color='link')

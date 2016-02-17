@@ -23,6 +23,8 @@ Requirements
 - Python 3.
 - Lua.
 - `Libcut <https://github.com/kirbyfan64/libcut>`_ if you want to build the tests.
+- `Headerdoc <https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/HeaderDoc/intro/intro.html>`
+  if you want to build the documentation.
 
 Building
 ********
@@ -30,6 +32,10 @@ Building
 Just run::
    
    $ fbuild
+
+To build the documentation, run::
+   
+   $ fbuild docs
 
 Usage
 *****
