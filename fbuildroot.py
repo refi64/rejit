@@ -102,13 +102,11 @@ def configure(ctx):
 
 def build(ctx):
     rec = configure(ctx)
-    c = rec.c
-    dasm = rec.dasm
-    src = dasm.translate('src/x86_64.dasc', 'codegen.c')
-    rejit = c.build_lib('rejit', Path.glob('src/*.c') + [Path('utf/utf.c')],
+    src = rec.dasm.translate('src/x86_64.dasc', 'codegen.c')
+    rejit = rec.c.build_lib('rejit', Path.glob('src/*.c') + [Path('utf/utf.c')],
         includes=['.', ctx.buildroot])
-    c.build_exe('bench', ['bench.c'], includes=['src'], libs=[rejit])
-    c.build_exe('ex', ['ex.c'], includes=['src'], libs=[rejit])
+    rec.c.build_exe('bench', ['bench.c'], includes=['src'], libs=[rejit])
+    rec.c.build_exe('ex', ['ex.c'], includes=['src'], libs=[rejit])
     if rec.tests:
-        c.build_exe('tst', ['tst.c'], includes=['src'], cflags=rec.testflags,
-            libs=[rejit])
+        rec.c.build_exe('tst', ['tst.c'], includes=['src'], cflags=rec.testflags,
+                        libs=[rejit])
