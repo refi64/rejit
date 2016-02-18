@@ -40,6 +40,6 @@ To build the documentation, run::
 Usage
 *****
 
-Right now, there aren't any docs, but you can check out the `demo script
-<https://github.com/kirbyfan64/rejit/blob/master/ex.c>`_ and the `test suite
-<https://github.com/kirbyfan64/rejit/blob/master/tst.c>`_ for a bunch of examples.
+Check out the `demo example
+<https://github.com/kirbyfan64/rejit/blob/master/ex.c>`_ and the `API docs
+<http://kirbyfan64.github.io/rejit/>`_.
