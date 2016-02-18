@@ -72,7 +72,7 @@
 
 | .define STR, edi
 | .define GR, ebx
-| .define SAV, TOS
+| .define SAV, esi
 | .define TMPB, ch
 | .define TMPD0, edx
 | .define TMPD1, ebp
@@ -90,14 +90,15 @@
 | push edi
 | push ebp
 | push ebx
+| push esi
 // Add offsets of just-pushed vars to arg offsets.
-| mov STR, [esp+16]
-| mov GR, [esp+20]
-| push STR
+| mov STR, [esp+20]
+| mov GR, [esp+24]
+| mov SAV, STR
 | .endmacro
 
 | .macro ubackup
-| discard
+| pop esi
 | pop ebx
 | pop ebp
 | pop edi
