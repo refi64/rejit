@@ -806,6 +806,14 @@ LIBCUT_TEST(test_save) {
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
 }
 
+LIBCUT_TEST(test_long_word) {
+    rejit_instruction instrs[] = {{RJ_IWORD, (intptr_t)"abcdefghij"}, {RJ_INULL}};
+    rejit_matcher m = rejit_compile_instrs(instrs, 0, RJ_FNONE);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcdefghij", NULL), 10);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcdefghi", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "abcdefghijk", NULL), 10);
+}
+
 LIBCUT_TEST(test_misc) {
     rejit_matcher m;
     rejit_parse_error err;
@@ -887,6 +895,7 @@ LIBCUT_MAIN(
     test_negative_lookahead, test_lookbehind, test_negative_lookbehind,
     test_mplus, test_mstar, test_or_mixed, test_set_and_dot, test_or_group,
     test_back, test_dotall, test_icase_word, test_icase_set, test_save,
+    test_long_word,
 
     test_search, test_match_len,
 

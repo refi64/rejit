@@ -66,6 +66,11 @@
 || }
 | .endmacro
 
+| .macro longcmp, a, b
+| mov64 TMPL0, b
+| cmp a, TMPL0
+| .endmacro
+
 | .else
 
 | .arch x86
@@ -119,6 +124,10 @@
 | pop STR
 | .endmacro
 
+| .macro longcmp, a, b
+| cmp dword a, b
+| .endmacro
+
 | .endif
 
 | .section code
@@ -163,7 +172,16 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IWORD:
         s = (char*)instr->value;
         len = strlen(s);
-        for (i=0; i<len; ++i) {
+        i = 0;
+        if (!(flags & RJ_FICASE || len < sizeof(unsigned long))) {
+            for (; i<len - (len % sizeof(unsigned long));
+                 i += sizeof(unsigned long)) {
+                | longcmp [STR+i], (*(unsigned long*)(s+i))
+                | jne =>*errpc
+            }
+            i -= i % sizeof(unsigned long);
+        }
+        for (; i<len; ++i) {
             char c = s[i];
             if (flags & RJ_FICASE && isalpha(c)) {
                 char uc = toupper(c), lc = tolower(c);
