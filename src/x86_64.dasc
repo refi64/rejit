@@ -393,7 +393,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | sub STR, len
             | cmp STR, SAV
             if (instr->kind == RJ_ILBEHIND)
-                | jl =>ebk
+                | jl =>*errpc
             else
                 | jl =>bk
         }
