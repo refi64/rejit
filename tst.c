@@ -70,6 +70,8 @@ LIBCUT_TEST(test_parse_word) {
     rejit_parse_result res;
     PARSE("ab")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IWORD);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value, "ab");
 
@@ -80,6 +82,8 @@ LIBCUT_TEST(test_parse_suffix) {
     rejit_parse_error err;
     rejit_parse_result res;
     PARSE("ab+")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IPLUS);
 
@@ -98,6 +102,8 @@ LIBCUT_TEST(test_parse_suffix) {
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
     PARSE("a(?:b?)")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IWORD);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value, "a");
@@ -122,6 +128,8 @@ LIBCUT_TEST(test_parse_suffix) {
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
     PARSE("a{2}")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IREP);
     LIBCUT_TEST_EQ(res.instrs[0].value, 2);
@@ -154,6 +162,8 @@ LIBCUT_TEST(test_parse_group) {
     rejit_parse_result res;
     PARSE("(ab?)")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ICGROUP);
     LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[3]);
 
@@ -165,6 +175,8 @@ LIBCUT_TEST(test_parse_group) {
     LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_INULL);
 
     PARSE("(?:ab?)")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IGROUP);
     LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[3]);
@@ -191,17 +203,23 @@ LIBCUT_TEST(test_parse_set) {
 
     PARSE("[abc]")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ISET);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value, "abc");
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value+4, "   ");
 
     PARSE("[^abc]")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INSET);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value, "abc");
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value+4, "   ");
 
     PARSE("[a-z0-9]")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ISET);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value,
@@ -211,6 +229,8 @@ LIBCUT_TEST(test_parse_set) {
 
     PARSE("\\w")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ISET);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value,
                       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -218,12 +238,16 @@ LIBCUT_TEST(test_parse_set) {
 
     PARSE("\\W")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INSET);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value,
                       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
                       "0123456789_");
 
     PARSE("[^a-z0-9]")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INSET);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value,
@@ -246,6 +270,8 @@ LIBCUT_TEST(test_parse_pipe) {
 
     PARSE("a|b")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IOR);
     LIBCUT_TEST_EQ(res.instrs[0].value, (intptr_t)&res.instrs[2]);
     LIBCUT_TEST_EQ(res.instrs[0].value2, (intptr_t)&res.instrs[3]);
@@ -259,6 +285,8 @@ LIBCUT_TEST(test_parse_pipe) {
     LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_INULL);
 
     PARSE("a|(b|c)")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 3);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IOR);
     LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
@@ -289,6 +317,8 @@ LIBCUT_TEST(test_parse_lookahead) {
 
     PARSE("(?=ab)")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ILAHEAD);
     LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
 
@@ -298,6 +328,8 @@ LIBCUT_TEST(test_parse_lookahead) {
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
     PARSE("(?!ab)")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INLAHEAD);
     LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
@@ -314,6 +346,8 @@ LIBCUT_TEST(test_parse_lookbehind) {
 
     PARSE("(?<=ab)")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_ILBEHIND);
     LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
 
@@ -323,6 +357,8 @@ LIBCUT_TEST(test_parse_lookbehind) {
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
     PARSE("(?<!ab)")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_INLBEHIND);
     LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
@@ -343,6 +379,8 @@ LIBCUT_TEST(test_parse_other) {
 
     PARSE("^a.b$")
 
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
+
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IBEGIN);
 
     LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_IWORD);
@@ -358,6 +396,8 @@ LIBCUT_TEST(test_parse_other) {
     LIBCUT_TEST_EQ(res.instrs[5].kind, RJ_INULL);
 
     PARSE("a\\1\\5b")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IWORD);
     LIBCUT_TEST_STREQ((char*)res.instrs[0].value, "a");

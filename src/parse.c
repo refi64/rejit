@@ -133,6 +133,7 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
 
     for (i=0; i<tokens.len; ++i) {
         rejit_token t = tokens.tokens[i];
+
         if (t.kind == RJ_TLP) {
             PUSH(st, i);
             prev = -1;
@@ -243,6 +244,8 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
     for (i=0; i<tokens.len; ++i) {
         rejit_token t = tokens.tokens[i];
         lb_later = 0;
+
+        if (pst.len + st.len > res->maxdepth) res->maxdepth = pst.len + st.len;
 
         if (suffixes[i] != -1) {
             rejit_token st = tokens.tokens[suffixes[i]];
@@ -422,6 +425,7 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
     rejit_token_list tokens;
     res.instrs = NULL;
     res.groups = 0;
+    res.maxdepth = 0;
     res.flags = RJ_FNONE;
 
     err->kind = RJ_PE_NONE;
