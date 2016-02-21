@@ -322,7 +322,6 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         GROW;
         GROW;
         bk = *pcl-1;
-        /* XXX if (needs_unsave) */ GROW;
         for (; ia != ib; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
@@ -330,18 +329,11 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | jmp =>bk
         |=>*errpc:
         | rstsave
-        *errpc = /* XXX needs_unsave ? */ bk+1 /* : ebk */;
+        *errpc = ebk;
         for (; ia != ic; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
         }
-        *errpc = ebk;
-        // if (needs_unsave) {
-            | jmp =>bk
-            |=>bk+1:
-            | rstsave
-            | jmp =>*errpc
-        // }
         |=>bk:
         break;
     case RJ_ICGROUP:
