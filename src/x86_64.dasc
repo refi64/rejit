@@ -23,47 +23,13 @@
 | .define SP, rsp
 | .define TOS, qword [SP]
 
-| .define RED_ZONE_SIZE, 128 // Number of bytes available in the red zone.
-
-| .macro discard
-| add SP, 8
-| .endmacro
+| .define PTRSIZE, 8
 
 | .macro backup
 | mov SAV, STR
 | .endmacro
 
 | .macro ubackup
-| .endmacro
-
-| .macro save
-|| {
-|| if (saved < RED_ZONE_SIZE/8) {
-|      mov [rsp-8*(saved+1)], STR
-||     needs_unsave = 0;
-|| } else {
-|      push STR
-||     needs_unsave = 1;
-|| }
-|| }
-| .endmacro
-
-| .macro gsave
-|| {
-|| if (needs_unsave)
-|      mov STR, TOS
-|| else
-|      mov STR, [rsp-8*(saved+1)]
-|| }
-| .endmacro
-
-| .macro rstsave
-|| {
-|| if (needs_unsave)
-|       pop STR
-|| else
-|       mov STR, [rsp-8*(saved+1)]
-|| }
 | .endmacro
 
 | .macro longcmp, a, b
@@ -87,9 +53,7 @@
 | .define SP, esp
 | .define TOS, dword [SP]
 
-| .macro discard
-| add SP, 4
-| .endmacro
+| .define PTRSIZE, 4
 
 | .macro backup
 | push edi
@@ -109,21 +73,6 @@
 | pop edi
 | .endmacro
 
-| .macro save
-|| {
-|| needs_unsave = 1;
-|  push STR
-|| }
-| .endmacro
-
-| .macro gsave
-|  mov STR, TOS
-| .endmacro
-
-| .macro rstsave
-| pop STR
-| .endmacro
-
 | .macro longcmp, a, b
 | cmp dword a, b
 | .endmacro
@@ -136,25 +85,42 @@
 
 | .define CONST, eax
 
-| .macro unsave
-|| if (needs_unsave)
-|      discard
+| .define SAVPOS, [SP+PTRSIZE*saved]
+
+| .macro save
+|  mov SAVPOS, STR
+| .endmacro
+
+| .macro rstsave
+|  mov STR, SAVPOS
+| .endmacro
+
+| .macro discard
+|  add SP, PTRSIZE
 | .endmacro
 
 | .type group, rejit_group
 
-static void compile_prolog(dasm_State** Dst) {
+static void compile_prolog(dasm_State** Dst, int maxdepth) {
     | backup
     | mov CONST, 1025
+    if (maxdepth)
+        | sub SP, maxdepth*PTRSIZE
 }
 
-static void compile_epilog(dasm_State** Dst) {
+static void compile_epilog(dasm_State** Dst, int maxdepth) {
     | mov RET, STR
     | sub RET, SAV
+    if (maxdepth) {
+        | add SP, maxdepth*PTRSIZE
+    }
     | ubackup
     | ret
     |=>0:
     | mov RET, -1
+    if (maxdepth) {
+        | add SP, maxdepth*PTRSIZE
+    }
     | ubackup
     | ret
 }
@@ -164,7 +130,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     rejit_instruction* ia, *ib, *ic;
     unsigned long magic;
     char min, *s;
-    int ebk = *errpc, bk, i, needs_unsave;
+    int ebk = *errpc, bk, i;
     size_t len;
     if (instr->kind > RJ_ISKIP) return;
     switch (instr->kind) {
@@ -356,28 +322,27 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         GROW;
         GROW;
         bk = *pcl-1;
-        if (needs_unsave) GROW;
+        /* XXX if (needs_unsave) */ GROW;
         for (; ia != ib; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
         }
         | jmp =>bk
         |=>*errpc:
-        | gsave
-        *errpc = needs_unsave ? bk+1 : ebk;
+        | rstsave
+        *errpc = /* XXX needs_unsave ? */ bk+1 /* : ebk */;
         for (; ia != ic; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
         }
         *errpc = ebk;
-        if (needs_unsave) {
+        // if (needs_unsave) {
             | jmp =>bk
             |=>bk+1:
             | rstsave
             | jmp =>*errpc
-        }
+        // }
         |=>bk:
-        | unsave
         break;
     case RJ_ICGROUP:
     case RJ_IGROUP:
@@ -433,22 +398,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | jmp =>*errpc
             |=>bk+1:
         }
-        if (instr->kind == RJ_ICGROUP) {
-            if (needs_unsave)
-                | mov TMPL0, TOS
-            else {
-                | .if X64
-                | mov TMPL0, [SP-8*(saved+1)]
-                | .else
-                || printf("needs_unsave should be true on X86\n"); abort();
-                | .endif
-            }
-        }
+        if (instr->kind == RJ_ICGROUP)
+            | mov TMPL0, SAVPOS
 
         if (instr->kind == RJ_ILAHEAD || instr->kind == RJ_ILBEHIND)
             | rstsave
         else if (instr->kind != RJ_INLAHEAD && instr->kind != RJ_INLBEHIND && !i)
-            | unsave
+            (void)0; // XXX
 
         if (instr->kind == RJ_ICGROUP) {
             | mov group:GR[instr->value2].begin, TMPL0

@@ -148,10 +148,10 @@ static rejit_func compile(dasm_State** d, size_t* sz, rejit_instruction* instrs,
     int errpc=0, pcl=1;
     dasm_growpc(d, 1);
 
-    compile_prolog(d);
+    compile_prolog(d, maxdepth);
     for (i=0; instrs[i].kind; ++i)
         compile_one(d, &instrs[i], &errpc, &pcl, 0, maxdepth, flags);
-    compile_epilog(d);
+    compile_epilog(d, maxdepth);
 
     return link_and_encode(d, sz);
 }
