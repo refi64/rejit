@@ -390,15 +390,12 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | jmp =>*errpc
             |=>bk+1:
         }
-        if (instr->kind == RJ_ICGROUP)
-            | mov TMPL0, SAVPOS
 
         if (instr->kind == RJ_ILAHEAD || instr->kind == RJ_ILBEHIND)
             | rstsave
-        else if (instr->kind != RJ_INLAHEAD && instr->kind != RJ_INLBEHIND && !i)
-            (void)0; // XXX
 
         if (instr->kind == RJ_ICGROUP) {
+            | mov TMPL0, SAVPOS
             | mov group:GR[instr->value2].begin, TMPL0
             | mov group:GR[instr->value2].end, STR
         }
