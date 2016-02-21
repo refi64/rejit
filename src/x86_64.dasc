@@ -160,7 +160,7 @@ static void compile_epilog(dasm_State** Dst) {
 }
 
 static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
-                        int* pcl, int saved, rejit_flags flags) {
+                        int* pcl, int saved, int maxdepth, rejit_flags flags) {
     rejit_instruction* ia, *ib, *ic;
     unsigned long magic;
     char min, *s;
@@ -205,7 +205,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IOPT:
         ia = instr+1;
         if (instr->kind == RJ_IPLUS)
-            compile_one(Dst, ia, errpc, pcl, saved, flags);
+            compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
         *errpc = *pcl;
         GROW;
         bk = *pcl;
@@ -213,7 +213,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         if (instr->kind != RJ_IOPT)
             |=>bk:
         if (instr->kind == RJ_IPLUS) unskip(ia);
-        compile_one(Dst, ia, errpc, pcl, saved, flags);
+        compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
         if (instr->kind != RJ_IOPT) {
             // Without the braces here, DynAsm generates incorrect code.
             | jmp =>bk
@@ -224,13 +224,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IREP:
         ia = instr+1;
         for (i=0; i<instr->value; ++i) {
-            compile_one(Dst, ia, errpc, pcl, saved, flags);
+            compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
             unskip(ia);
         }
         *errpc = *pcl;
         GROW;
         for (i=instr->value; i<instr->value2; ++i) {
-            compile_one(Dst, ia, errpc, pcl, saved, flags);
+            compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
             unskip(ia);
         }
         |=>*errpc:
@@ -246,7 +246,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | jmp =>bk+1
         }
         |=>bk:
-        compile_one(Dst, ia, errpc, pcl, saved, flags);
+        compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
         skip(ia);
         if (instr->kind == RJ_IMSTAR)
             |=>bk+1:
@@ -358,7 +358,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         bk = *pcl-1;
         if (needs_unsave) GROW;
         for (; ia != ib; ++ia) {
-            compile_one(Dst, ia, errpc, pcl, saved+1, flags);
+            compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
         }
         | jmp =>bk
@@ -366,7 +366,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         | gsave
         *errpc = needs_unsave ? bk+1 : ebk;
         for (; ia != ic; ++ia) {
-            compile_one(Dst, ia, errpc, pcl, saved+1, flags);
+            compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
         }
         *errpc = ebk;
@@ -416,7 +416,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
                 | jl =>bk
         }
         for (; ia != ib; ++ia) {
-            compile_one(Dst, ia, errpc, pcl, saved+1, flags);
+            compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
         }
         *errpc = ebk;
