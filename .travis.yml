@@ -1,9 +1,5 @@
 language: c
 sudo: true
-before_install:
-    - "sudo sh -c 'echo \"deb http://archive.ubuntu.com/ubuntu/ precise main restricted universe multiverse\" >> /etc/apt/sources.list'"
-    - "sudo apt-get update"
-    - "sudo apt-get install python3 lua5.2 liblua5.2-dev ia32-libs"
 install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
@@ -15,3 +11,12 @@ script:
     - "fbuild/fbuild-light --cflag=-Ilibcut --cflag=-m32 || cat build/fbuild.log && build/tst"
 env:
     - "LUA_CPATH=$TRAVIS_BUILD_DIR/luabitop/?.so"
+addons:
+  apt:
+    packages:
+        - python3
+        - lua5.2
+        - liblua5.2-dev
+        - ia32-libs
+        - ia32-libs-multiarch
+        - libgd2-xpm
