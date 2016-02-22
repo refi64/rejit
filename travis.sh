@@ -11,5 +11,5 @@ run() {
 
 run --use-color
 run --use-color --cflag=-m32
-run --cc=gcc
-run --cc=gcc --cflag=-m32
+run --cc=gcc-4.9
+run --cc=gcc-4.9 --cflag=-m32
