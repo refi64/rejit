@@ -4,9 +4,14 @@ set -ex
 
 fbuild="fbuild/fbuild-light"
 
-run() {
+run_base() {
     $fbuild --clean
     $fbuild --cflag=-Ilibcut "$@" || cat build/fbuild.log && build/tst
+}
+
+run() {
+    run_base "$@"
+    run_base --release "$@"
 }
 
 run --use-color
