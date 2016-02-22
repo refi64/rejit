@@ -154,6 +154,7 @@ def docs(ctx):
     rejit_h = Path('src/rejit.h')
 
     ctx.execute([rec.headerdoc.headerdoc2html, '-o', output, rejit_h],
-                'headerdoc2html', '%s -> %s' % (rejit_h, output), color='compile')
+                'headerdoc2html', '%s -> %s' % (rejit_h, output),
+                color='compile')
     ctx.execute([rec.headerdoc.gatherheaderdoc, output], 'gatherheaderdoc',
                 output, color='link')
