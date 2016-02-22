@@ -1,7 +1,5 @@
 language: c
 sudo: true
-before_install:
-    - "sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test"
 install:
     - "git clone https://github.com/felix-lang/fbuild.git"
     - "git clone https://github.com/kirbyfan64/libcut.git"
@@ -12,13 +10,15 @@ script:
 env:
     - "LUA_CPATH=$TRAVIS_BUILD_DIR/luabitop/?.so"
 addons:
-  apt:
-    packages:
-        - gcc-4.9
-        - python3
-        - lua5.2
-        - liblua5.2-dev
-        - ia32-libs
-        - ia32-libs-multiarch
-        - libgd2-xpm
-        - gcc-multilib
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - gcc-4.9
+            - python3
+            - lua5.2
+            - liblua5.2-dev
+            - ia32-libs
+            - ia32-libs-multiarch
+            - libgd2-xpm
+            - gcc-multilib
