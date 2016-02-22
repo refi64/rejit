@@ -20,3 +20,4 @@ addons:
         - ia32-libs
         - ia32-libs-multiarch
         - libgd2-xpm
+        - gcc-multilib
