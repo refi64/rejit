@@ -48,14 +48,34 @@ class DynAsmBuilder(fbuild.db.PersistentObject):
         self.ctx.execute(cmd, 'dynasm', '%s -> %s' % (src, dst), color='yellow')
         return dst
 
-@fbuild.db.caches
 def get_target_arch(ctx, c):
     ctx.logger.check('determining target architecture')
-    cmd = [c.compiler.cc.exe, '-dumpmachine']
-    cmd.extend(c.compiler.flags)
-    triple = ctx.execute(cmd, quieter=1)[0].decode('ascii')
-    arch = triple.split('-')[0]
-    ctx.logger.passed('ok ' + arch)
+    prog = '''
+    #include <stdio.h>
+
+    #if defined(__i386__) || defined(__i386) || defined(i386)
+    #define ARCH "i386"
+    #elif defined(__x86_64__) || defined(__x86_64)
+    #define ARCH "x86_64"
+    #else
+    #error unsupported target architecture
+    #endif
+
+    int main() {
+        puts(ARCH);
+        return 0;
+    }
+    '''
+
+    try:
+        stdout, stderr = c.tempfile_run(prog, stderr=None)
+    except fbuild.ExecutionError as e:
+        ctx.logger.failed()
+        raise fbuild.ConfigFailed('cannot determine target architecture')
+    else:
+        arch = stdout.decode().strip()
+        ctx.logger.passed(arch)
+
     return arch
 
 def find_headerdoc(ctx):
@@ -99,7 +119,7 @@ def configure(ctx):
         # X86 is implemented in the x86_64.dasc file.
         arch = 'x86_64'
     else:
-        raise fbuild.ConfigFailed('unsupported target architecture ' + arch)
+        assert 0, "get_target_arch returned invalid architecture '%s'" % arch
 
     dasm = DynAsmBuilder(ctx, exe=ctx.options.lua, defs=defs)
 
