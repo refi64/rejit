@@ -98,6 +98,8 @@ int rejit_match_len(rejit_instruction* instr) {
                 instr->kind);
         abort();
     }
+
+    abort();
 }
 
 static void unskip(rejit_instruction* instr) {
