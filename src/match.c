@@ -18,7 +18,7 @@
 
 #define MAXSZ 100
 
-static void compile_one(dasm_State**, rejit_instruction*, int*, int*, int,
+static void compile_one(dasm_State**, rejit_instruction*, int*, int*, int, int,
                         rejit_flags);
 
 #define GROW dasm_growpc(Dst, ++*pcl)
@@ -139,7 +139,7 @@ static void* link_and_encode(dasm_State** d, size_t* sz) {
 }
 
 static rejit_func compile(dasm_State** d, size_t* sz, rejit_instruction* instrs,
-                          rejit_flags flags) {
+                          int maxdepth, rejit_flags flags) {
     int i;
     void* labels[lbl__MAX];
     dasm_setupglobal(d, labels, lbl__MAX);
@@ -148,22 +148,22 @@ static rejit_func compile(dasm_State** d, size_t* sz, rejit_instruction* instrs,
     int errpc=0, pcl=1;
     dasm_growpc(d, 1);
 
-    compile_prolog(d);
+    compile_prolog(d, maxdepth);
     for (i=0; instrs[i].kind; ++i)
-        compile_one(d, &instrs[i], &errpc, &pcl, 0, flags);
-    compile_epilog(d);
+        compile_one(d, &instrs[i], &errpc, &pcl, 0, maxdepth, flags);
+    compile_epilog(d, maxdepth);
 
     return link_and_encode(d, sz);
 }
 
 rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
-                                   rejit_flags flags) {
+                                   int maxdepth, rejit_flags flags) {
     rejit_func func;
     rejit_matcher res;
     size_t sz;
     dasm_State* d;
     dasm_init(&d, DASM_MAXSECTION);
-    func = compile(&d, &sz, instrs, flags);
+    func = compile(&d, &sz, instrs, maxdepth, flags);
     dasm_free(&d);
     res = malloc(sizeof(struct rejit_matcher_type));
     if (!res) return NULL;

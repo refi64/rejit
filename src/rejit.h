@@ -97,7 +97,7 @@ typedef struct rejit_token_list_type {
     @brief The value returned from @link rejit_parse @/link. */
 typedef struct rejit_parse_result_type {
     rejit_instruction* instrs;
-    int groups;
+    int groups, maxdepth;
     rejit_flags flags;
 } rejit_parse_result;
 
@@ -152,7 +152,7 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err);
 void rejit_free_parse_result(rejit_parse_result res);
 int rejit_match_len(rejit_instruction* instr);
 rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
-                                   rejit_flags flags);
+                                   int maxdepth, rejit_flags flags);
 /*! @function rejit_compile
     @brief Compile the result of calling @link rejit_parse @/link.
 
