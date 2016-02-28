@@ -109,7 +109,6 @@ typedef struct rejit_parse_result_type {
     @const RJ_PE_OVFLOW Stack overflow (too many nested parens).
     @const RJ_PE_RANGE Bad character range.
     @const RJ_PE_INT Expected an integer.
-    @const RJ_PE_LBVAR Lookbehind contains variable-length expression.
     @const RJ_PE_MEM Out of memory. */
 typedef enum {
     RJ_PE_NONE,
@@ -118,7 +117,6 @@ typedef enum {
     RJ_PE_OVFLOW,
     RJ_PE_RANGE,
     RJ_PE_INT,
-    RJ_PE_LBVAR,
     RJ_PE_MEM,
 } rejit_parse_error_kind;
 
