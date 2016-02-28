@@ -368,9 +368,9 @@ LIBCUT_TEST(test_parse_lookbehind) {
 
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
-    rejit_parse("(?<=a*)", &err);
-    LIBCUT_TEST_EQ(err.kind, RJ_PE_LBVAR);
-    LIBCUT_TEST_EQ(err.pos, 5);
+    /* rejit_parse("(?<=a*)", &err); */
+    /* LIBCUT_TEST_EQ(err.kind, RJ_PE_LBVAR); */
+    /* LIBCUT_TEST_EQ(err.pos, 5); */
 }
 
 LIBCUT_TEST(test_parse_other) {
@@ -737,7 +737,8 @@ LIBCUT_TEST(test_match_len) {
     LIBCUT_TEST_EQ(rejit_match_len(ic), 1);
 
     ia->kind = RJ_IPLUS;
-    LIBCUT_TEST_EQ(rejit_match_len(ia), -1);
+    ia->value = (intptr_t)ib;
+    LIBCUT_TEST_EQ(rejit_match_len(ia), -6);
 
     ia->kind = RJ_ISTAR;
     LIBCUT_TEST_EQ(rejit_match_len(ia), -1);
@@ -745,7 +746,7 @@ LIBCUT_TEST(test_match_len) {
     ia->kind = RJ_IREP;
     ia->value = 2;
     ia->value2 = 5;
-    LIBCUT_TEST_EQ(rejit_match_len(ia), -1);
+    LIBCUT_TEST_EQ(rejit_match_len(ia), -12);
     ia->value2 = 2;
     LIBCUT_TEST_EQ(rejit_match_len(ia), 12);
 

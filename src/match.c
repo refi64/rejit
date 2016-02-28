@@ -65,15 +65,16 @@ int rejit_match_len(rejit_instruction* instr) {
     switch (instr->kind) {
     case RJ_IWORD: return strlen((char*)instr->value);
     case RJ_ISET: case RJ_INSET: case RJ_IDOT: return 1;
-    case RJ_IOPT: case RJ_ISTAR: case RJ_IMSTAR: case RJ_IPLUS: case RJ_IMPLUS:
-        return -1;
+    case RJ_IOPT: case RJ_ISTAR: case RJ_IMSTAR: return -1;
+    case RJ_IPLUS: case RJ_IMPLUS:
+        return -rejit_match_len((rejit_instruction*)instr->value);
     case RJ_IREP:
         ia = instr+1;
         a = rejit_match_len(ia);
         ia->len_from = instr;
-        return instr->value == instr->value2 && a != -1
-               ? a * instr->value
-               : -1;
+        if (a < 0) return a * instr->value;
+        else if (instr->value != instr->value2) return -a * instr->value;
+        else return a * instr->value;
     case RJ_ILAHEAD: case RJ_INLAHEAD: case RJ_ILBEHIND: case RJ_INLBEHIND:
     case RJ_IBEGIN: case RJ_IEND: return 0;
     case RJ_IGROUP: case RJ_ICGROUP:
@@ -91,7 +92,7 @@ int rejit_match_len(rejit_instruction* instr) {
             b += rejit_match_len(ia);
             ia->len_from = instr;
         }
-        return a == b ? a : -1;
+        return a == b ? a : -(a < b ? a : b);
     case RJ_IBACK: return -1; // XXX
     case RJ_INULL: case RJ_ISKIP: case RJ_IARG: case RJ_IVARG:
         fprintf(stderr, "invalid kind %d given to rejit_match_len\n",

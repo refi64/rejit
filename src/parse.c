@@ -234,7 +234,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
     #define CUR res->instrs[ninstrs]
     #define LBH(t,i) do {\
         if (lbh)\
-            if (((i)->len = rejit_match_len(i)) == -1) {\
+            if (((i)->len = rejit_match_len(i)) < 0) {\
                 err->kind = RJ_PE_LBVAR;\
                 err->pos = (t).pos - str;\
                 return;\
