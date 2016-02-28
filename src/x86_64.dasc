@@ -22,6 +22,7 @@
 | .define RET, rax
 | .define SP, rsp
 | .define TOS, qword [SP]
+| .define RCONST, eax
 
 | .define PTRSIZE, 8
 
@@ -52,6 +53,7 @@
 | .define RET, eax
 | .define SP, esp
 | .define TOS, dword [SP]
+| .define RCONST, TMPL1
 
 | .define PTRSIZE, 4
 
@@ -83,8 +85,6 @@
 | .globals lbl_
 | .actionlist actions
 
-| .define CONST, eax
-
 | .define SAVPOS, [SP+PTRSIZE*saved]
 
 | .macro save
@@ -101,9 +101,13 @@
 
 | .type group, rejit_group
 
+#define CONST 1025
+
 static void compile_prolog(dasm_State** Dst, int maxdepth) {
     | backup
-    | mov CONST, 1025
+    | .if X64
+    | mov RCONST, 1025
+    | .endif
     if (maxdepth)
         | sub SP, maxdepth*PTRSIZE
 }
@@ -224,8 +228,11 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | test TMPB, TMPB
             | jz =>*errpc
         } else {
+            | .if not X64
+            | mov RCONST, CONST
+            | .endif
             | movzx TMPD0, byte [STR]
-            | bt CONST, TMPD0
+            | bt RCONST, TMPD0
             | jb =>*errpc
         }
         | inc STR
