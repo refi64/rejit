@@ -83,8 +83,6 @@
 | .globals lbl_
 | .actionlist actions
 
-| .define CONST, eax
-
 | .define SAVPOS, [SP+PTRSIZE*saved]
 
 | .macro save
@@ -103,7 +101,6 @@
 
 static void compile_prolog(dasm_State** Dst, int maxdepth) {
     | backup
-    | mov CONST, 1025
     if (maxdepth)
         | sub SP, maxdepth*PTRSIZE
 }
@@ -225,7 +222,8 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             | jz =>*errpc
         } else {
             | movzx TMPD0, byte [STR]
-            | bt CONST, TMPD0
+            | mov TMPD1, 1025
+            | bt TMPD1, TMPD0
             | jb =>*errpc
         }
         | inc STR
