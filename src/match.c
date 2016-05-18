@@ -18,7 +18,7 @@
 
 #define MAXSZ 100
 
-static void compile_one(dasm_State**, rejit_instruction*, int*, int*, int, int,
+static void compile_one(dasm_State**, rejit_instruction*, int, int*, int, int,
                         rejit_flags);
 
 #define GROW dasm_growpc(Dst, ++*pcl)
@@ -147,12 +147,12 @@ static rejit_func compile(dasm_State** d, size_t* sz, rejit_instruction* instrs,
     dasm_setupglobal(d, labels, lbl__MAX);
     dasm_setup(d, actions);
 
-    int errpc=0, pcl=1;
+    int pcl=1;
     dasm_growpc(d, 1);
 
     compile_prolog(d, maxdepth);
     for (i=0; instrs[i].kind; ++i)
-        compile_one(d, &instrs[i], &errpc, &pcl, 0, maxdepth, flags);
+        compile_one(d, &instrs[i], 0, &pcl, 0, maxdepth, flags);
     compile_epilog(d, &pcl, maxdepth);
 
     return link_and_encode(d, sz);
