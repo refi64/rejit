@@ -359,19 +359,16 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         ia = instr+1;
         ib = (rejit_instruction*)instr->value;
         ic = (rejit_instruction*)instr->value2;
-        | save
-        *errpc = *pcl;
+        bk = *pcl;
         GROW;
         GROW;
-        bk = *pcl-1;
+        | fork =>bk+1
         for (; ia != ib; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
         }
         | jmp =>bk
-        |=>*errpc:
-        | rstsave
-        *errpc = ebk;
+        |=>bk+1:
         for (; ia != ic; ++ia) {
             compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
             skip(ia);
