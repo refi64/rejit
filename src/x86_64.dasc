@@ -93,7 +93,7 @@
 | .globals lbl_
 | .actionlist actions
 
-| .define SAVPOS, [SP+PTRSIZE*saved]
+| .define SAVPOS, [TS+PTRSIZE*saved]
 
 | .macro save
 |  mov SAVPOS, STR

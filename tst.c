@@ -930,7 +930,7 @@ LIBCUT_MAIN(
     test_parse_other,
 
     test_chr, test_dot, test_plus, test_star, test_opt, test_rep, test_begin,
-    test_end, test_set, test_nset, test_or, test_group, /* test_cgroup, */
+    test_end, test_set, test_nset, test_or, test_group, test_cgroup,
     test_opt_group, test_star_group, test_plus_group, test_lookahead,
     test_negative_lookahead, test_lookbehind, test_negative_lookbehind,
     test_mplus, test_mstar, test_or_mixed, test_set_and_dot, test_or_group,
