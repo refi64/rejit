@@ -254,9 +254,10 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         |=>bk:
         compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
         skip(ia);
-        if (instr->kind == RJ_IMSTAR)
+        if (instr->kind == RJ_IMSTAR) {
             |=>bk+1:
-        *errpc = bk;
+        }
+        | fork =>bk
         break;
     case RJ_IDOT:
         if (flags & RJ_FDOTALL) {
