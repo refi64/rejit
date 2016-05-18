@@ -22,6 +22,7 @@
 | .define RET, rax
 | .define SP, rsp
 | .define TOS, qword [SP]
+| .define TP, rbp
 
 | .define PTRSIZE, 8
 
@@ -97,17 +98,27 @@
 |  add SP, PTRSIZE
 | .endmacro
 
+typedef struct {
+    char* str;
+    void* jmp;
+} thread; // This should be PTRSIZE*2 bytes.
+
 | .type group, rejit_group
+| .type thread, thread
 
 static void compile_prolog(dasm_State** Dst, int maxdepth) {
     | backup
-    if (maxdepth)
+    if (maxdepth) {
         | sub SP, maxdepth*PTRSIZE
+    }
+    | push TP
+    | mov TP, SP
 }
 
 static void compile_epilog(dasm_State** Dst, int maxdepth) {
     | mov RET, STR
     | sub RET, SAV
+    | pop TP
     if (maxdepth) {
         | add SP, maxdepth*PTRSIZE
     }
@@ -115,6 +126,7 @@ static void compile_epilog(dasm_State** Dst, int maxdepth) {
     | ret
     |=>0:
     | mov RET, -1
+    | pop TP
     if (maxdepth) {
         | add SP, maxdepth*PTRSIZE
     }
