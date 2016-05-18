@@ -111,7 +111,8 @@
 | sub SP, PTRSIZE*2
 | mov TP, SP
 | mov thread:TP->str, STR
-| mov thread:TP->jmp, l
+| lea TMPL0, [l]
+| mov thread:TP->jmp, TMPL0
 | .endmacro
 
 typedef struct {
@@ -149,9 +150,10 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
     |=>0:
     | cmp TP, TS
     | je =>bk // No more threads to run.
-    | sub TP, #thread
-    | mov STR, [TP + #thread + offsetof(thread, str)]
-    | jmpaddr [TP + #thread + offsetof(thread, jmp)]
+    | mov TMPL0, TP
+    | add TP, #thread
+    | mov STR, thread:TMPL0->str
+    | jmpaddr thread:TMPL0->jmp
     |=>bk:
     | mov RET, -1
     | mov SP, TS
@@ -209,21 +211,22 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
     case RJ_IPLUS:
     case RJ_IOPT:
         ia = instr+1;
-        if (instr->kind == RJ_IPLUS)
-            compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
-        *errpc = *pcl;
-        GROW;
         bk = *pcl;
         GROW;
+        GROW;
+        if (instr->kind == RJ_IPLUS)
+            compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
+        else
+            | fork =>bk
         if (instr->kind != RJ_IOPT)
-            |=>bk:
+            |=>bk+1:
         if (instr->kind == RJ_IPLUS) unskip(ia);
         compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
         if (instr->kind != RJ_IOPT) {
-            // Without the braces here, DynAsm generates incorrect code.
-            | jmp =>bk
+            | fork =>bk
+            | jmp =>bk+1
         }
-        |=>*errpc:
+        |=>bk:
         skip(ia);
         break;
     case RJ_IREP:
