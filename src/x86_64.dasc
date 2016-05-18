@@ -39,6 +39,10 @@
 | cmp a, TMPL0
 | .endmacro
 
+| .macro jmpaddr, a
+| jmp qword a
+| .endmacro
+
 | .else
 
 | .arch x86
@@ -79,6 +83,10 @@
 | cmp dword a, b
 | .endmacro
 
+| .macro jmpaddr, a
+| jmp dword a
+| .endmacro
+
 | .endif
 
 | .section code
@@ -97,6 +105,13 @@
 
 | .macro discard
 |  add SP, PTRSIZE
+| .endmacro
+
+| .macro fork, l
+| sub SP, PTRSIZE*2
+| mov TP, SP
+| mov thread:TP->str, STR
+| mov thread:TP->jmp, l
 | .endmacro
 
 typedef struct {
@@ -118,7 +133,9 @@ static void compile_prolog(dasm_State** Dst, int maxdepth) {
     | mov TS, SP
 }
 
-static void compile_epilog(dasm_State** Dst, int maxdepth) {
+static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
+    int bk = *pcl;
+    GROW;
     | mov RET, STR
     | sub RET, SAV
     | mov SP, TS
@@ -130,6 +147,12 @@ static void compile_epilog(dasm_State** Dst, int maxdepth) {
     | ubackup
     | ret
     |=>0:
+    | cmp TP, TS
+    | je =>bk // No more threads to run.
+    | sub TP, #thread
+    | mov STR, [TP + #thread + offsetof(thread, str)]
+    | jmpaddr [TP + #thread + offsetof(thread, jmp)]
+    |=>bk:
     | mov RET, -1
     | mov SP, TS
     | pop TS
