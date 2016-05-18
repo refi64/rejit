@@ -107,7 +107,9 @@
 | .globals lbl_
 | .actionlist actions
 
-| .define SAVPOS, [TS+PTRSIZE*saved]
+/* The +1 is to prevent overwriting the TP save, as TS is set *after* TP is
+   pushed. */
+| .define SAVPOS, [TS+PTRSIZE*(saved+1)]
 
 | .macro save
 |  mov SAVPOS, STR
