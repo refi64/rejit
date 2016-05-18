@@ -139,7 +139,6 @@ static void compile_prolog(dasm_State** Dst, int maxdepth) {
         | sub SP, maxdepth*PTRSIZE
     }
     | push TP
-    | push TS
     | mov TP, SP
     | mov TS, SP
 }
@@ -148,7 +147,6 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
     int bk = *pcl;
     GROW;
     | mov SP, TS
-    | pop TS
     | pop TP
     | mov RET, STR
     | sub RET, SAV
@@ -166,7 +164,6 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
     | jmpaddr thread:TMPL1->jmp
     |=>bk:
     | mov SP, TS
-    | pop TS
     | pop TP
     | mov RET, -1
     if (maxdepth) {
