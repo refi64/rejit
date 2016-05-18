@@ -23,6 +23,7 @@
 | .define SP, rsp
 | .define TOS, qword [SP]
 | .define TP, rbp
+| .define TS, rcx
 
 | .define PTRSIZE, 8
 
@@ -112,12 +113,16 @@ static void compile_prolog(dasm_State** Dst, int maxdepth) {
         | sub SP, maxdepth*PTRSIZE
     }
     | push TP
+    | push TS
     | mov TP, SP
+    | mov TS, SP
 }
 
 static void compile_epilog(dasm_State** Dst, int maxdepth) {
     | mov RET, STR
     | sub RET, SAV
+    | mov SP, TS
+    | pop TS
     | pop TP
     if (maxdepth) {
         | add SP, maxdepth*PTRSIZE
@@ -126,6 +131,8 @@ static void compile_epilog(dasm_State** Dst, int maxdepth) {
     | ret
     |=>0:
     | mov RET, -1
+    | mov SP, TS
+    | pop TS
     | pop TP
     if (maxdepth) {
         | add SP, maxdepth*PTRSIZE
