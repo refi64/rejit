@@ -121,8 +121,8 @@
 | sub SP, PTRSIZE*2
 | mov TP, SP
 | mov thread:TP->str, STR
-| lea TMPL0, [l]
-| mov thread:TP->jmp, TMPL0
+| lea TMPL1, [l]
+| mov thread:TP->jmp, TMPL1
 | .endmacro
 
 typedef struct {
@@ -160,15 +160,15 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
     |=>0:
     | cmp TP, TS
     | je =>bk // No more threads to run.
-    | mov TMPL0, TP
+    | mov TMPL1, TP
     | add TP, #thread
-    | mov STR, thread:TMPL0->str
-    | jmpaddr thread:TMPL0->jmp
+    | mov STR, thread:TMPL1->str
+    | jmpaddr thread:TMPL1->jmp
     |=>bk:
-    | mov RET, -1
     | mov SP, TS
     | pop TS
     | pop TP
+    | mov RET, -1
     if (maxdepth) {
         | add SP, maxdepth*PTRSIZE
     }
@@ -275,9 +275,11 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             | test TMPB, TMPB
             | jz =>errpc
         } else {
+            | saved0
             | movzx TMPD0, byte [STR]
             | mov TMPD1, 1025
             | bt TMPD1, TMPD0
+            | rstd0
             | jb =>errpc
         }
         | inc STR
@@ -294,20 +296,28 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         bk = *pcl;
         GROW;
         GROW;
+        GROW;
+        | saved0
         | mov TMPL0, group:GR[instr->value].begin
         | mov TMPL1, group:GR[instr->value].end
         | sub TMPL1, TMPL0
-        | jz =>errpc
+        | jz =>bk+1
         |=>bk:
         | dec TMPL1
         | mov TMPB, [STR+TMPL1]
         | cmp TMPB, [TMPL0+TMPL1]
-        | jne =>errpc
+        | jne =>bk+1
         | test TMPL1, TMPL1
         | jnz =>bk
         | sub TMPL0, group:GR[instr->value].end
         // TMPL0 now holds -len, so str-(-len) == str+len.
         | sub STR, TMPL0
+        | rstd0
+        | jmp =>bk+2
+        |=>bk+1:
+        | rstd0
+        | jmp =>errpc
+        |=>bk+2:
         break;
     case RJ_ISET:
     case RJ_INSET:
@@ -446,8 +456,8 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             | rstsave
 
         if (instr->kind == RJ_ICGROUP) {
-            | mov TMPL0, SAVPOS
-            | mov group:GR[instr->value2].begin, TMPL0
+            | mov TMPL1, SAVPOS
+            | mov group:GR[instr->value2].begin, TMPL1
             | mov group:GR[instr->value2].end, STR
         }
         break;
