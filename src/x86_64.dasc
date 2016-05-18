@@ -42,6 +42,12 @@
 | jmp qword a
 | .endmacro
 
+| .macro saved0
+| .endmacro
+
+| .macro rstd0
+| .endmacro
+
 | .else
 
 | .arch x86
@@ -56,6 +62,8 @@
 | .define TMPL1, TMPD1
 | .define RET, eax
 | .define SP, esp
+| .define TP, RET
+| .define TS, TMPD0 // XXX: Watch out when modifying TS and use saved0/rstd0!
 
 | .define PTRSIZE, 4
 
@@ -83,6 +91,14 @@
 
 | .macro jmpaddr, a
 | jmp dword a
+| .endmacro
+
+| .macro saved0
+| push TMPD0
+| .endmacro
+
+| .macro rstd0
+| pop TMPD0
 | .endmacro
 
 | .endif
@@ -131,11 +147,11 @@ static void compile_prolog(dasm_State** Dst, int maxdepth) {
 static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
     int bk = *pcl;
     GROW;
-    | mov RET, STR
-    | sub RET, SAV
     | mov SP, TS
     | pop TS
     | pop TP
+    | mov RET, STR
+    | sub RET, SAV
     if (maxdepth) {
         | add SP, maxdepth*PTRSIZE
     }
@@ -334,11 +350,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
                 | =>*pcl-1:
             }
         if (magic) {
-            | mov TMPD0, magic
             | movzx TMPD1, byte [STR]
             | sub TMPD1, min
             | js =>AE
+            | saved0
+            | mov TMPD0, magic
             | bt TMPD0, TMPD1
+            | rstd0
             | jae =>AE
             if (instr->kind == RJ_INSET)
                 | jmp =>errpc
