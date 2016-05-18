@@ -232,13 +232,14 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
             compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
             unskip(ia);
         }
-        *errpc = *pcl;
+        bk = *pcl;
         GROW;
         for (i=instr->value; i<instr->value2; ++i) {
+            | fork =>bk
             compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
             unskip(ia);
         }
-        |=>*errpc:
+        |=>bk:
         skip(ia);
         break;
     case RJ_IMSTAR:
