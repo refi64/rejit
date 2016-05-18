@@ -484,9 +484,9 @@ LIBCUT_TEST(test_rep) {
 }
 
 LIBCUT_TEST(test_begin) {
-    // c*^
+    // c*^$
     rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_IWORD, (intptr_t)"c"},
-                                  {RJ_IBEGIN}, {RJ_INULL}};
+                                  {RJ_IBEGIN}, {RJ_IEND}, {RJ_INULL}};
     rejit_matcher m = rejit_compile_instrs(instrs, 0, 0, RJ_FNONE);
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), 0);
     LIBCUT_TEST_EQ(rejit_match(m, "c", NULL), -1);
@@ -912,7 +912,7 @@ LIBCUT_TEST(test_misc) {
     m = rejit_parse_compile(".{0,2}(?:a)", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
     LIBCUT_TEST_EQ(m->groups, 0);
-    LIBCUT_TEST_EQ(rejit_match(m, "aa", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "aa", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "aaa", NULL), 3);
     LIBCUT_TEST_EQ(rejit_match(m, "aaaa", NULL), 3);
 
