@@ -214,13 +214,10 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int* errpc,
         bk = *pcl;
         GROW;
         GROW;
-        if (instr->kind == RJ_IPLUS)
-            compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
-        else
+        if (instr->kind != RJ_IPLUS)
             | fork =>bk
         if (instr->kind != RJ_IOPT)
             |=>bk+1:
-        if (instr->kind == RJ_IPLUS) unskip(ia);
         compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
         if (instr->kind != RJ_IOPT) {
             | fork =>bk
