@@ -23,7 +23,7 @@ Requirements
 - Python 3.
 - Lua.
 - `Libcut <https://github.com/kirbyfan64/libcut>`_ if you want to build the tests.
-- `Headerdoc <https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/HeaderDoc/intro/intro.html>`
+- `Headerdoc <https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/HeaderDoc/intro/intro.html>`_
   if you want to build the documentation.
 
 Building
