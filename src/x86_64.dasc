@@ -223,16 +223,18 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         bk = *pcl;
         GROW;
         GROW;
-        if (instr->kind != RJ_IPLUS)
-            | fork =>bk
-        if (instr->kind != RJ_IOPT)
-            |=>bk+1:
-        compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
-        if (instr->kind != RJ_IOPT) {
-            | fork =>bk
-            | jmp =>bk+1
-        }
         |=>bk:
+        if (instr->kind != RJ_IPLUS) {
+            | fork =>bk+1
+        }
+        compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
+        if (instr->kind == RJ_ISTAR) {
+            | jmp =>bk
+        } else if (instr->kind == RJ_IPLUS) {
+            | fork =>bk+1
+            | jmp =>bk
+        }
+        |=>bk+1:
         skip(ia);
         break;
     case RJ_IREP:
