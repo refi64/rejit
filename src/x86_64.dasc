@@ -406,6 +406,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
     case RJ_INLBEHIND:
         errpc = bk = *pcl;
         GROW;
+        GROW;
         if (instr->kind != RJ_INLAHEAD && instr->kind != RJ_INLBEHIND) GROW;
         ia = instr+1;
         ib = (rejit_instruction*)instr->value;
