@@ -270,7 +270,7 @@ LIBCUT_TEST(test_parse_pipe) {
 
     PARSE("a|b")
 
-    LIBCUT_TEST_EQ(res.maxdepth, 1);
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IOR);
     LIBCUT_TEST_EQ(res.instrs[0].value, (intptr_t)&res.instrs[2]);
@@ -286,7 +286,7 @@ LIBCUT_TEST(test_parse_pipe) {
 
     PARSE("a|(b|c)")
 
-    LIBCUT_TEST_EQ(res.maxdepth, 3);
+    LIBCUT_TEST_EQ(res.maxdepth, 1);
 
     LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IOR);
     LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);

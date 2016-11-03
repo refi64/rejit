@@ -245,7 +245,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
         rejit_token t = tokens.tokens[i];
         lb_later = 0;
 
-        if (pst.len + st.len > res->maxdepth) res->maxdepth = pst.len + st.len;
+        if (st.len > res->maxdepth) res->maxdepth = st.len;
 
         if (suffixes[i] != -1) {
             rejit_token st = tokens.tokens[suffixes[i]];

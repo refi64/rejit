@@ -359,13 +359,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         GROW;
         | fork =>bk+1
         for (; ia != ib; ++ia) {
-            compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
+            compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
             skip(ia);
         }
         | jmp =>bk
         |=>bk+1:
         for (; ia != ic; ++ia) {
-            compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
+            compile_one(Dst, ia, errpc, pcl, saved, maxdepth, flags);
             skip(ia);
         }
         |=>bk:
