@@ -104,10 +104,17 @@
 | .endmacro
 
 | .macro fork, l
-| sub SP, PTRSIZE*2
+| sub SP, threadsz
 | mov thread:TP->str, STR
 | lea TMPL1, [l]
 | mov thread:TP->jmp, TMPL1
+|| {
+||     int fork_i;
+||     for (fork_i=0; fork_i<maxdepth; fork_i++) {
+        | mov TMPL1, [TS+PTRSIZE*fork_i]
+        | mov [TP + #thread + PTRSIZE*fork_i], TMPL1
+||     }
+|| }
 | .endmacro
 
 typedef struct {
@@ -117,6 +124,7 @@ typedef struct {
 
 | .type group, rejit_group
 | .type thread, thread
+| .define threadsz, #thread+(maxdepth*PTRSIZE)
 
 static void compile_prolog(dasm_State** Dst, int maxdepth) {
     | backup
@@ -127,7 +135,7 @@ static void compile_prolog(dasm_State** Dst, int maxdepth) {
 }
 
 static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
-    int bk = *pcl;
+    int i, bk = *pcl;
     GROW;
     | mov SP, TS
     | mov RET, STR
@@ -141,8 +149,12 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
     | cmp TP, TS
     | je =>bk // No more threads to run.
     | mov TMPL1, TP
-    | add TP, #thread
+    | add TP, threadsz
     | mov STR, thread:TMPL1->str
+    for (i=0; i<maxdepth; i++) {
+        | mov TMPL0, [TMPL1 + #thread + PTRSIZE*i]
+        | mov [TS+PTRSIZE*i], TMPL0
+    }
     | jmpaddr thread:TMPL1->jmp
     |=>bk:
     | mov SP, TS
