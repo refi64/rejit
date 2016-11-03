@@ -21,7 +21,6 @@
 | .define TMPL1, rdx
 | .define RET, rax
 | .define SP, rsp
-| .define TP, rbp
 | .define TS, rcx
 
 | .define PTRSIZE, 8
@@ -42,12 +41,6 @@
 | jmp qword a
 | .endmacro
 
-| .macro saved0
-| .endmacro
-
-| .macro rstd0
-| .endmacro
-
 | .else
 
 | .arch x86
@@ -62,8 +55,7 @@
 | .define TMPL1, TMPD1
 | .define RET, eax
 | .define SP, esp
-| .define TP, RET
-| .define TS, TMPD0 // XXX: Watch out when modifying TS and use saved0/rstd0!
+| .define TS, RET
 
 | .define PTRSIZE, 4
 
@@ -93,23 +85,15 @@
 | jmp dword a
 | .endmacro
 
-| .macro saved0
-| push TMPD0
-| .endmacro
-
-| .macro rstd0
-| pop TMPD0
-| .endmacro
-
 | .endif
 
 | .section code
 | .globals lbl_
 | .actionlist actions
 
-/* The +1 is to prevent overwriting the TP save, as TS is set *after* TP is
-   pushed. */
-| .define SAVPOS, [TS+PTRSIZE*(saved+1)]
+| .define SAVPOS, [TS+PTRSIZE*saved]
+
+| .define TP, SP
 
 | .macro save
 |  mov SAVPOS, STR
@@ -121,7 +105,6 @@
 
 | .macro fork, l
 | sub SP, PTRSIZE*2
-| mov TP, SP
 | mov thread:TP->str, STR
 | lea TMPL1, [l]
 | mov thread:TP->jmp, TMPL1
@@ -140,8 +123,6 @@ static void compile_prolog(dasm_State** Dst, int maxdepth) {
     if (maxdepth) {
         | sub SP, maxdepth*PTRSIZE
     }
-    | push TP
-    | mov TP, SP
     | mov TS, SP
 }
 
@@ -149,7 +130,6 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
     int bk = *pcl;
     GROW;
     | mov SP, TS
-    | pop TP
     | mov RET, STR
     | sub RET, SAV
     if (maxdepth) {
@@ -166,7 +146,6 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
     | jmpaddr thread:TMPL1->jmp
     |=>bk:
     | mov SP, TS
-    | pop TP
     | mov RET, -1
     if (maxdepth) {
         | add SP, maxdepth*PTRSIZE
@@ -276,11 +255,9 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             | test TMPB, TMPB
             | jz =>errpc
         } else {
-            | saved0
             | movzx TMPD0, byte [STR]
             | mov TMPD1, 1025
             | bt TMPD1, TMPD0
-            | rstd0
             | jb =>errpc
         }
         | inc STR
@@ -298,7 +275,6 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         GROW;
         GROW;
         GROW;
-        | saved0
         | mov TMPL0, group:GR[instr->value].begin
         | mov TMPL1, group:GR[instr->value].end
         | sub TMPL1, TMPL0
@@ -313,10 +289,8 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         | sub TMPL0, group:GR[instr->value].end
         // TMPL0 now holds -len, so str-(-len) == str+len.
         | sub STR, TMPL0
-        | rstd0
         | jmp =>bk+2
         |=>bk+1:
-        | rstd0
         | jmp =>errpc
         |=>bk+2:
         break;
@@ -364,10 +338,8 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             | movzx TMPD1, byte [STR]
             | sub TMPD1, min
             | js =>AE
-            | saved0
             | mov TMPD0, magic
             | bt TMPD0, TMPD1
-            | rstd0
             | jae =>AE
             if (instr->kind == RJ_INSET)
                 | jmp =>errpc
