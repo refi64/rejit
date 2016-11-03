@@ -275,7 +275,9 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 CUR.kind += RJ_IMSTAR - RJ_ISTAR;
             if (!lb_later) LBH(st, &CUR);
             ++ninstrs;
-        } else if (pst.len && i == TOS(pst).mid)
+        }
+
+        if (pst.len && i == TOS(pst).mid)
             TOS(pst).instr->value = (intptr_t)&CUR;
         else if (pst.len && i == TOS(pst).end) {
             LBH(tokens.tokens[TOS(pst).mid], TOS(pst).instr);

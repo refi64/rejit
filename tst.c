@@ -373,6 +373,26 @@ LIBCUT_TEST(test_parse_lookbehind) {
     LIBCUT_TEST_EQ(err.pos, 5);
 }
 
+LIBCUT_TEST(test_parse_pipe_suffix) {
+    rejit_parse_error err;
+    rejit_parse_result res;
+
+    PARSE("|a*")
+
+    LIBCUT_TEST_EQ(res.maxdepth, 0);
+
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IOR);
+    LIBCUT_TEST_EQ((void*)res.instrs[0].value, (void*)&res.instrs[2]);
+    LIBCUT_TEST_EQ((void*)res.instrs[0].value2, (void*)&res.instrs[3]);
+
+    LIBCUT_TEST_EQ(res.instrs[1].kind, RJ_ISTAR);
+
+    LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_IWORD);
+    LIBCUT_TEST_STREQ((char*)res.instrs[2].value, "a");
+
+    LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_INULL);
+}
+
 LIBCUT_TEST(test_parse_other) {
     rejit_parse_error err;
     rejit_parse_result res;
@@ -958,7 +978,7 @@ LIBCUT_MAIN(
 
     test_parse_word, test_parse_suffix, test_parse_group, test_parse_set,
     test_parse_pipe, test_parse_lookahead, test_parse_lookbehind,
-    test_parse_other,
+    test_parse_pipe_suffix, test_parse_other,
 
     test_chr, test_dot, test_plus, test_star, test_opt, test_rep, test_begin,
     test_end, test_set, test_nset, test_or, test_group, test_cgroup,
