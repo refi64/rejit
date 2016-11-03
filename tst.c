@@ -857,9 +857,7 @@ LIBCUT_TEST(test_long_word) {
 LIBCUT_TEST(test_misc) {
     rejit_matcher m;
     rejit_parse_error err;
-    rejit_group group;
-
-    group.begin = group.end = NULL;
+    rejit_group groups[3];
 
     m = rejit_parse_compile("[Oo]rgani[sz]ation", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
@@ -876,16 +874,17 @@ LIBCUT_TEST(test_misc) {
     LIBCUT_TEST_EQ(rejit_match(m, "honorable", NULL), 9);
     LIBCUT_TEST_EQ(rejit_match(m, "honourable", NULL), 10);
 
+    memset(groups, 0, sizeof(groups));
     m = rejit_parse_compile("a(b)?c", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
     LIBCUT_TEST_EQ(m->groups, 1);
-    LIBCUT_TEST_EQ(rejit_match(m, "abc", &group), 3);
-    LIBCUT_TEST_STREQ(group.begin, "bc");
-    LIBCUT_TEST_STREQ(group.end, "c");
-    group.begin = group.end = NULL;
-    LIBCUT_TEST_EQ(rejit_match(m, "ac", &group), 2);
-    LIBCUT_TEST_EQ(group.begin, NULL);
-    LIBCUT_TEST_EQ(group.end, NULL);
+    LIBCUT_TEST_EQ(rejit_match(m, "abc", groups), 3);
+    LIBCUT_TEST_STREQ(groups[0].begin, "bc");
+    LIBCUT_TEST_STREQ(groups[0].end, "c");
+    memset(groups, 0, sizeof(groups));
+    LIBCUT_TEST_EQ(rejit_match(m, "ac", groups), 2);
+    LIBCUT_TEST_EQ(groups[0].begin, NULL);
+    LIBCUT_TEST_EQ(groups[0].end, NULL);
 
     m = rejit_parse_compile("[ÁÃa]b", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
@@ -920,6 +919,27 @@ LIBCUT_TEST(test_misc) {
     LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
     LIBCUT_TEST_EQ(m->groups, 0);
     LIBCUT_TEST_EQ(rejit_match(m, "aab", NULL), 3);
+
+    memset(groups, 0, sizeof(groups));
+    m = rejit_parse_compile("(a+)(a*)(a+)", &err, RJ_FNONE);
+    LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+    LIBCUT_TEST_EQ(m->groups, 3);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", groups), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "aa", groups), 2);
+    LIBCUT_TEST_STREQ(groups[0].begin, "aa");
+    LIBCUT_TEST_STREQ(groups[0].end, "a");
+    LIBCUT_TEST_STREQ(groups[1].begin, "a");
+    LIBCUT_TEST_STREQ(groups[1].end, "a");
+    LIBCUT_TEST_STREQ(groups[2].begin, "a");
+    LIBCUT_TEST_STREQ(groups[2].end, "");
+    memset(groups, 0, sizeof(groups));
+    LIBCUT_TEST_EQ(rejit_match(m, "aaaaaa", groups), 6);
+    LIBCUT_TEST_STREQ(groups[0].begin, "aaaaaa");
+    LIBCUT_TEST_STREQ(groups[0].end, "a");
+    LIBCUT_TEST_STREQ(groups[1].begin, "a");
+    LIBCUT_TEST_STREQ(groups[1].end, "a");
+    LIBCUT_TEST_STREQ(groups[2].begin, "a");
+    LIBCUT_TEST_STREQ(groups[2].end, "");
 }
 
 LIBCUT_MAIN(
