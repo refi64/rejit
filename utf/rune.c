@@ -11,7 +11,9 @@
  * ANY REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
  * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
  */
+#include <stdarg.h>
 #include <string.h>
+#include "plan9.h"
 #include "utf.h"
 
 enum
@@ -51,7 +53,7 @@ chartorune(Rune *rune, char *str)
 	 * one character sequence
 	 *	00000-0007F => T1
 	 */
-	c = *(unsigned char*)str;
+	c = *(uchar*)str;
 	if(c < Tx) {
 		*rune = c;
 		return 1;
@@ -61,7 +63,7 @@ chartorune(Rune *rune, char *str)
 	 * two character sequence
 	 *	0080-07FF => T2 Tx
 	 */
-	c1 = *(unsigned char*)(str+1) ^ Tx;
+	c1 = *(uchar*)(str+1) ^ Tx;
 	if(c1 & Testx)
 		goto bad;
 	if(c < T3) {
@@ -78,7 +80,7 @@ chartorune(Rune *rune, char *str)
 	 * three character sequence
 	 *	0800-FFFF => T3 Tx Tx
 	 */
-	c2 = *(unsigned char*)(str+2) ^ Tx;
+	c2 = *(uchar*)(str+2) ^ Tx;
 	if(c2 & Testx)
 		goto bad;
 	if(c < T4) {
@@ -94,7 +96,7 @@ chartorune(Rune *rune, char *str)
 	 *	10000-10FFFF => T4 Tx Tx Tx
 	 */
 	if(UTFmax >= 4) {
-		c3 = *(unsigned char*)(str+3) ^ Tx;
+		c3 = *(uchar*)(str+3) ^ Tx;
 		if(c3 & Testx)
 			goto bad;
 		if(c < T5) {
@@ -116,47 +118,100 @@ bad:
 	return 1;
 }
 
-Rune*
-runestrchr(Rune *s, Rune c)
+int
+runetochar(char *str, Rune *rune)
 {
-	Rune c0 = c;
-	Rune c1;
+	long c;
 
-	if(c == 0) {
-		while(*s++)
-			;
-		return s-1;
+	/*
+	 * one character sequence
+	 *	00000-0007F => 00-7F
+	 */
+	c = *rune;
+	if(c <= Rune1) {
+		str[0] = c;
+		return 1;
 	}
 
-	while((c1 = *s++))
-		if(c1 == c0)
-			return s-1;
-	return 0;
+	/*
+	 * two character sequence
+	 *	00080-007FF => T2 Tx
+	 */
+	if(c <= Rune2) {
+		str[0] = T2 | (c >> 1*Bitx);
+		str[1] = Tx | (c & Maskx);
+		return 2;
+	}
+
+	/*
+	 * three character sequence
+	 *	00800-0FFFF => T3 Tx Tx
+	 */
+	if(c > Runemax)
+		c = Runeerror;
+	if(c <= Rune3) {
+		str[0] = T3 |  (c >> 2*Bitx);
+		str[1] = Tx | ((c >> 1*Bitx) & Maskx);
+		str[2] = Tx |  (c & Maskx);
+		return 3;
+	}
+	
+	/*
+	 * four character sequence
+	 *	010000-1FFFFF => T4 Tx Tx Tx
+	 */
+	str[0] = T4 |  (c >> 3*Bitx);
+	str[1] = Tx | ((c >> 2*Bitx) & Maskx);
+	str[2] = Tx | ((c >> 1*Bitx) & Maskx);
+	str[3] = Tx |  (c & Maskx);
+	return 4;
 }
 
-char*
-utfrune(char *s, Rune c)
+int
+runelen(long c)
 {
-	Rune c1;
-	Rune r;
-	int n;
+	Rune rune;
+	char str[10];
 
-	if(c < Runesync)		/* not part of utf sequence */
-		return strchr(s, c);
+	rune = c;
+	return runetochar(str, &rune);
+}
 
-	for(;;) {
-		c1 = *(unsigned char*)s;
-		if(c1 < Runeself) {	/* one byte rune */
-			if(c1 == 0)
-				return 0;
-			if(c1 == c)
-				return s;
-			s++;
-			continue;
-		}
-		n = chartorune(&r, s);
-		if(r == c)
-			return s;
-		s += n;
+int
+runenlen(Rune *r, int nrune)
+{
+	int nb, c;
+
+	nb = 0;
+	while(nrune--) {
+		c = *r++;
+		if(c <= Rune1)
+			nb++;
+		else
+		if(c <= Rune2)
+			nb += 2;
+		else
+		if(c <= Rune3 || c > Runemax)
+			nb += 3;
+		else
+			nb += 4;
 	}
+	return nb;
+}
+
+int
+fullrune(char *str, int n)
+{
+	int c;
+
+	if(n <= 0)
+		return 0;
+	c = *(uchar*)str;
+	if(c < Tx)
+		return 1;
+	if(c < T3)
+		return n >= 2;
+	if(UTFmax == 3 || c < T4)
+		return n >= 3;
+	return n >= 4;
 }

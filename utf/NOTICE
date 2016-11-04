@@ -1,5 +1,5 @@
 /*
- * The authors of this software is Rob Pike.
+ * The authors of this software are Rob Pike and Ken Thompson.
  *		Copyright (c) 2002 by Lucent Technologies.
  * Permission to use, copy, modify, and distribute this software for any
  * purpose without fee is hereby granted, provided that this entire notice
@@ -12,7 +12,7 @@
  * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
 */
 
-This is a Unix port of the Plan 9 regular expression library.
+This is a Unix port of the Plan 9 formatted I/O package.
 
 Please send comments about the packaging
 to Russ Cox <rsc@swtch.com>.

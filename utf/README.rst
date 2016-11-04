@@ -1,4 +1,5 @@
 utf
 ===
 
-This is a copy of the utf-related files from https://github.com/0intro/libregexp.
+This is an extract from plan9port's libutf, located at
+`the plan9port website <http://swtch.com/plan9port/unix/libutf.tgz>`_.

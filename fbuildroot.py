@@ -139,7 +139,7 @@ def configure(ctx):
 def build(ctx):
     rec = configure(ctx)
     src = rec.dasm.translate('src/x86_64.dasc', 'codegen.c')
-    rejit = rec.c.build_lib('rejit', Path.glob('src/*.c') + [Path('utf/utf.c')],
+    rejit = rec.c.build_lib('rejit', Path.glob('src/*.c') + Path.glob('utf/*.c'),
         includes=['.', ctx.buildroot])
     rec.c.build_exe('bench', ['bench.c'], includes=['src'], libs=[rejit])
     rec.c.build_exe('ex', ['ex.c'], includes=['src'], libs=[rejit])
