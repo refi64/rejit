@@ -32,6 +32,20 @@
 | .macro ubackup
 | .endmacro
 
+| .macro saveregs
+| push rcx
+| push rsi
+| push rdi
+| push r11
+| .endmacro
+
+| .macro rstregs
+| pop r11
+| pop rdi
+| pop rsi
+| pop rcx
+| .endmacro
+
 | .macro longcmp, a, b
 | mov64 TMPL0, b
 | cmp a, TMPL0
@@ -75,6 +89,14 @@
 | pop ebx
 | pop ebp
 | pop edi
+| .endmacro
+
+| .macro saveregs
+| push eax
+| .endmacro
+
+| .macro rstregs
+| pop eax
 | .endmacro
 
 | .macro longcmp, a, b
@@ -366,6 +388,67 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         |=>bk:
         | inc STR
         |=>bk+1:
+        break;
+    case RJ_IMSET:
+        assert(flags & RJ_FUNICODE);
+        assert(sizeof(wchar_t) == 4);
+        assert(sizeof(wint_t) == 4);
+        assert(sizeof(mbstate_t) == 8);
+        | saveregs
+        | .if X64
+        | sub SP, sizeof(wchar_t)
+        | mov rdi, SP
+        | sub SP, sizeof(mbstate_t)
+        | xor rax, rax
+        | mov [SP], rax
+        | mov rsi, STR
+        | mov rdx, MB_CUR_MAX
+        | mov rcx, SP
+        | .else
+        | sub SP, sizeof(wchar_t)
+        | mov TMPD0, SP
+        | sub SP, sizeof(mbstate_t)
+        | xor eax, eax
+        | mov dword [SP], eax
+        | mov dword [SP+4], eax
+        | push SP
+        | push MB_CUR_MAX
+        | push STR
+        | push TMPD0
+        | .endif
+        | mov TMPL0, mbrtowc
+        | call TMPL0
+        | add STR, RET
+        | add SP, sizeof(mbstate_t)
+        | .if not X64
+        | add SP, 4*3
+        | .endif
+
+        | mov edi, [SP]
+        | .if not X64
+        | push edi
+        | .endif
+        switch (instr->value) {
+        case 's':
+            | mov TMPL0, iswspace
+            break;
+        case 'w':
+            | mov TMPL0, iswalnum
+            break;
+        case 'd':
+            | mov TMPL0, isdigit
+            break;
+        }
+        | call TMPL0
+        | xor TMPB, TMPB
+        | test RET, RET
+        if (instr->value2)
+            | sete TMPB
+        else
+            | setne TMPB
+        | rstregs
+        | test TMPB, TMPB
+        | jz =>errpc
         break;
     case RJ_IOR:
         ia = instr+1;

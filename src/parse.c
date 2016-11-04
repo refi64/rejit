@@ -351,6 +351,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                     #define F(c,f) case c: res->flags |= RJ_F##f; break;
                     F('s', DOTALL)
                     F('i', ICASE)
+                    F('u', UNICODE)
                     default: break;
                     }
                 ++i;
@@ -381,16 +382,23 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             ++ninstrs;
             break;
         case RJ_TMS:
-            CUR.kind = isupper(t.pos[1]) ? RJ_INSET : RJ_ISET;
-            switch (t.pos[1]) {
-            #define T(l,c,n) case l: case c: s = n##set; break;
-            T('s', 'S', s)
-            T('w', 'W', w)
-            T('d', 'D', d)
+            if (res->flags & RJ_FUNICODE) {
+                CUR.kind = RJ_IMSET;
+                CUR.value = tolower(t.pos[1]);
+                CUR.value2 = !!isupper(t.pos[1]);
+                ++ninstrs;
+            } else {
+                CUR.kind = isupper(t.pos[1]) ? RJ_INSET : RJ_ISET;
+                switch (t.pos[1]) {
+                #define T(l,c,n) case l: case c: s = n##set; break;
+                T('s', 'S', s)
+                T('w', 'W', w)
+                T('d', 'D', d)
+                }
+                CUR.value = (intptr_t)expand_set(NULL, s, strlen(s), NULL);
+                CUR.len = 1;
+                ++ninstrs;
             }
-            CUR.value = (intptr_t)expand_set(NULL, s, strlen(s), NULL);
-            CUR.len = 1;
-            ++ninstrs;
             break;
         case RJ_TBACK:
             CUR.kind = RJ_IBACK;
