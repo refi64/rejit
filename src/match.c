@@ -31,7 +31,7 @@ static unsigned long genmagic(char* s, char* min, size_t* len, int icase) {
     *min = *s;
     for (b=s; *s; ++s) {
         // Uppercase chars always have a lower ASCII value than lowercase.
-        char c = icase ? isupper(*s) : *s;
+        char c = icase ? toupper(*s) : *s;
         if (c < *min) *min = c;
     }
     *len = s-b;
