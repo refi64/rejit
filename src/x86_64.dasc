@@ -393,6 +393,10 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         break;
     case RJ_IUSET:
         assert(sizeof(Rune) == 4);
+        | mov TMPB, [STR]
+        | test TMPB, TMPB
+        | jz =>errpc
+
         | push TMPLP
         | saveregs
         | sub SP, sizeof(Rune)
