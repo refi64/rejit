@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -xe
+ZIP=ucd.all.flat.zip
+curl -O -J "http://www.unicode.org/Public/UCD/latest/ucdxml/$ZIP"
+unzip $ZIP
+./extract_digits.py
