@@ -383,7 +383,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             break;
         case RJ_TMS:
             if (res->flags & RJ_FUNICODE) {
-                CUR.kind = RJ_IMSET;
+                CUR.kind = RJ_IUSET;
                 CUR.value = tolower(t.pos[1]);
                 CUR.value2 = !!isupper(t.pos[1]);
                 ++ninstrs;

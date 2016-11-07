@@ -391,7 +391,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         | inc STR
         |=>bk+1:
         break;
-    case RJ_IMSET:
+    case RJ_IUSET:
         assert(flags & RJ_FUNICODE);
         assert(sizeof(wchar_t) == 4);
         assert(sizeof(wint_t) == 4);

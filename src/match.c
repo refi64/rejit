@@ -78,7 +78,7 @@ int rejit_match_len(rejit_instruction* instr) {
     case RJ_IWORD: return strlen((char*)instr->value);
     case RJ_ISET: case RJ_INSET: case RJ_IDOT: return 1;
     case RJ_IOPT: case RJ_ISTAR: case RJ_IMSTAR: case RJ_IPLUS: case RJ_IMPLUS:
-    case RJ_IMSET:
+    case RJ_IUSET:
         return -1;
     case RJ_IREP:
         ia = instr+1;

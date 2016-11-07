@@ -261,7 +261,7 @@ LIBCUT_TEST(test_parse_set) {
     LIBCUT_TEST_EQ(res.maxdepth, 0);
     LIBCUT_TEST_EQ(res.flags & RJ_FUNICODE, RJ_FUNICODE);
 
-    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IMSET);
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IUSET);
     LIBCUT_TEST_EQ((char)res.instrs[0].value, 'w');
     LIBCUT_TEST_EQ(res.instrs[0].value2, 0);
 
@@ -270,7 +270,7 @@ LIBCUT_TEST(test_parse_set) {
     LIBCUT_TEST_EQ(res.maxdepth, 0);
     LIBCUT_TEST_EQ(res.flags & RJ_FUNICODE, RJ_FUNICODE);
 
-    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IMSET);
+    LIBCUT_TEST_EQ(res.instrs[0].kind, RJ_IUSET);
     LIBCUT_TEST_EQ((char)res.instrs[0].value, 'w');
     LIBCUT_TEST_EQ(res.instrs[0].value2, 1);
 
