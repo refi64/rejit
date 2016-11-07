@@ -7,13 +7,15 @@
 #include <time.h>
 #include <rejit.h>
 
+#define ITERATIONS 1000000
+
 double get_time() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec + (ts.tv_nsec / 1e9);
 }
 
-int bench(const char* regex, const char* s, int it) {
+int bench(const char* regex, const char* s, int it, rejit_flags flags) {
     int i;
     double start, end, diff;
     int r;
@@ -39,16 +41,54 @@ int bench(const char* regex, const char* s, int it) {
     return 0;
 }
 
-int main(int argc, char** argv) {
-    int it = 1000000;
+void usage(const char* prog) {
+    fprintf(stderr, "usage: %s <regex to benchmark> <sample string> "
+                    "[iterations: -i%d] [unicode: -u]\n", prog, ITERATIONS);
+}
 
-    if (argc != 3 && argc != 4) {
-        fprintf(stderr, "usage: %s <regex to benchmark> <sample string> "
-                        "[<iterations=%d>]\n", argv[0], it);
+int main(int argc, char** argv) {
+    int i, it = ITERATIONS;
+    rejit_flags flags = RJ_FNONE;
+
+    if (argc < 3) {
+        usage(argv[0]);
         return 1;
     }
 
-    if (argc == 4) it = atoi(argv[3]);
+    for (i=3; i<argc; ++i) {
+        const char* arg = argv[i];
 
-    return bench(argv[1], argv[2], it);
+        if (*arg != '-') {
+            usage(argv[0]);
+            return 1;
+        }
+        arg++;
+        if (!*arg) {
+            fprintf(stderr, "empty argument\n");
+            return 1;
+        }
+
+        for (; *arg; ++arg) {
+            switch (*arg) {
+            case 'u':
+                flags |= RJ_FUNICODE;
+                break;
+            case 'i':
+                it = atoi(arg+1);
+                if (it <= 0) {
+                    fprintf(stderr, "%s is not a valid # of iterations\n",
+                            arg+1);
+                    return 1;
+                }
+                goto out;
+            default:
+                fprintf(stderr, "invalid argument: %s\n", arg);
+                return 1;
+            }
+        }
+
+        out:;
+    }
+
+    return bench(argv[1], argv[2], it, flags);
 }
