@@ -586,7 +586,7 @@ LIBCUT_TEST(test_uset) {
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "Ã", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "1", NULL), -1);
-    /* LIBCUT_TEST_EQ(rejit_match(m, "!", NULL), 1); */
+    LIBCUT_TEST_EQ(rejit_match(m, "!", NULL), 1);
 }
 
 LIBCUT_TEST(test_or) {

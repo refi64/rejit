@@ -392,97 +392,40 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         |=>bk+1:
         break;
     case RJ_IUSET:
-        assert(flags & RJ_FUNICODE);
-        assert(sizeof(wchar_t) == 4);
-        assert(sizeof(wint_t) == 4);
-        assert(sizeof(mbstate_t) == 8);
-        bk = *pcl;
-        GROW;
+        assert(sizeof(Rune) == 4);
         | push TMPLP
         | saveregs
+        | sub SP, sizeof(Rune)
         | .if X64
         | mov rsi, STR
-        | sub SP, sizeof(wchar_t)
         | mov rdi, SP
-        | sub SP, sizeof(mbstate_t)
-        | xor rax, rax
-        | mov [SP], rax
-        | mov rdx, MB_CUR_MAX
-        | mov rcx, SP
         | .else
-        | sub SP, sizeof(wchar_t)
         | mov TMPD0, SP
-        | sub SP, sizeof(mbstate_t)
-        | xor eax, eax
-        | mov dword [SP], eax
-        | mov dword [SP+4], eax
-        | push SP
-        | push MB_CUR_MAX
         | push STR
         | push TMPD0
         | .endif
-        | mov TMPL0, mbrtowc
+        | mov TMPL0, chartorune
         | call TMPL0
         | mov TMPLP, RET
-        | add SP, sizeof(mbstate_t)
         | .if not X64
-        | add SP, 4*4
+        | add SP, 4*2
         | .endif
 
-        | test RET, RET
-        | jns =>bk
-        | jnz =>bk
-        | add SP, sizeof(wchar_t)
-        | rstregs
-        | pop TMPLP
-        | jmp =>errpc
-        |=>bk:
-
-        i = 0; // Was decimal?
         switch (instr->value) {
         case 's':
-            | mov TMPL0, iswspace
+            | mov TMPL0, isspacerune
             break;
         case 'd':
-            i = 1;
-            // Fallthrough.
+            | mov TMPL0, isdigitrune
+            break;
         case 'w':
-            | mov TMPL0, iswalnum
+            | mov TMPL0, isalnumrune
             break;
         }
-        wmatch:
         | .if X64
         | mov edi, [SP]
         | .endif
         | call TMPL0
-        if (i) {
-            /* Minor/major/stupid annoyance:
-               C has no "is Unicode digit" function. iswdigit is basically the
-               same thing as isdigit, but for wchar_t; i.e., it disregards the
-               current locale. Therefore, the only way to check if a character
-               is a Unicode digit is (iswalnum(c) && !iswalpha(c)). As a result,
-               this code has to jump backwards and add more matching code.
-               Whoever thought that was a good idea needs to have their rights
-               taken away. */
-            int bk2 = *pcl;
-            GROW;
-            i = 0;
-            | test RET, RET
-            if (instr->value2) {
-                | jz =>bk2
-            } else {
-                | jnz =>bk2
-            }
-            | add SP, sizeof(wchar_t)
-            | rstregs
-            | pop TMPLP
-            | jmp =>errpc
-            |=>bk2:
-            | mov TMPL0, iswalpha
-            instr->value2 = !instr->value2;
-            goto wmatch;
-        }
-
         | xor TMPB, TMPB
         | test RET, RET
         if (instr->value2) {
@@ -490,7 +433,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         } else {
             | setnz TMPB
         }
-        | add SP, sizeof(wchar_t)
+        | add SP, sizeof(Rune)
         | rstregs
         | add STR, TMPLP
         | pop TMPLP

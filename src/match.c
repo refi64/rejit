@@ -6,12 +6,9 @@
 
 #include <sys/mman.h>
 #include <assert.h>
-#include <locale.h>
 #include <stdlib.h>
-#include <wctype.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <wchar.h>
 #include "dynasm/dasm_proto.h"
 #include "utf/utf.h"
 
@@ -25,15 +22,6 @@ static void compile_one(dasm_State**, rejit_instruction*, int, int*, int, int,
                         rejit_flags);
 
 #define GROW dasm_growpc(Dst, ++*pcl)
-
-static char* dup(const char* s) {
-    char* ret;
-    size_t len = strlen(s);
-    ret = malloc(len+1);
-    if (ret == NULL) return NULL;
-    memcpy(ret, s, len+1);
-    return ret;
-}
 
 static unsigned long genmagic(char* s, char* min, size_t* len, int icase) {
     unsigned long res=0;
@@ -171,30 +159,14 @@ static rejit_func compile(dasm_State** d, size_t* sz, rejit_instruction* instrs,
     return link_and_encode(d, sz);
 }
 
-#define BACKUP_LOCALE(old_locale) do { \
-        (old_locale) = dup(setlocale(LC_ALL, NULL)); \
-        if (old_locale) \
-            setlocale(LC_ALL, ""); \
-    } while (0)
-
-#define RESTORE_LOCALE(old_locale) do { \
-        if (old_locale) { \
-            setlocale(LC_ALL, old_locale); \
-            free(old_locale); \
-        } \
-    } while (0)
-
 rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
                                    int maxdepth, rejit_flags flags) {
     rejit_func func;
     rejit_matcher res;
-    char* old_locale = NULL;
     size_t sz;
     dasm_State* d;
     dasm_init(&d, DASM_MAXSECTION);
-    if (flags & RJ_FUNICODE) BACKUP_LOCALE(old_locale);
     func = compile(&d, &sz, instrs, maxdepth, flags);
-    RESTORE_LOCALE(old_locale);
     dasm_free(&d);
     res = malloc(sizeof(struct rejit_matcher_type));
     if (!res) return NULL;
@@ -206,25 +178,17 @@ rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
 }
 
 int rejit_match(rejit_matcher m, const char* str, rejit_group* groups) {
-    char* old_locale = NULL;
-    int ret;
-    if (m->flags & RJ_FUNICODE) BACKUP_LOCALE(old_locale);
-    ret = m->func(str, groups);
-    RESTORE_LOCALE(old_locale);
-    return ret;
+    return m->func(str, groups);
 }
 
 int rejit_search(rejit_matcher m, const char* str, const char** tgt,
                  rejit_group* groups) {
     int res = -1;
-    char* old_locale = NULL;
-    if (m->flags & RJ_FUNICODE) BACKUP_LOCALE(old_locale);
     for (;res == -1 && *str; ++str) {
         if (m->groups) memset(groups, 0, sizeof(rejit_group)*m->groups);
-        res = m->func(str, groups);
+        res = rejit_match(m, str, groups);
     }
     if (tgt != NULL && res != -1) *tgt = str+1;
-    RESTORE_LOCALE(old_locale);
     return res;
 }
 

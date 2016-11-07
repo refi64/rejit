@@ -20,6 +20,7 @@ int		chartorune(Rune *rune, char *str);
 int		fullrune(char *str, int n);
 int		isdigitrune(Rune c);
 int		isalpharune(Rune c);
+int		isalnumrune(Rune c);
 int		islowerrune(Rune c);
 int		isspacerune(Rune c);
 int		istitlerune(Rune c);

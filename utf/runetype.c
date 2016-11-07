@@ -1148,6 +1148,12 @@ isalpharune(Rune c)
 }
 
 int
+isalnumrune(Rune c)
+{
+    return isalpharune(c) || isdigitrune(c);
+}
+
+int
 istitlerune(Rune c)
 {
 	return isupperrune(c) && islowerrune(c);
