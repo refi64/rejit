@@ -396,13 +396,14 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         assert(sizeof(wchar_t) == 4);
         assert(sizeof(wint_t) == 4);
         assert(sizeof(mbstate_t) == 8);
+        bk = *pcl;
+        GROW;
         | push TMPLP
         | saveregs
         | .if X64
         | mov rsi, STR
         | sub SP, sizeof(wchar_t)
         | mov rdi, SP
-        | int 3
         | sub SP, sizeof(mbstate_t)
         | xor rax, rax
         | mov [SP], rax
@@ -421,18 +422,23 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         | push TMPD0
         | .endif
         | mov TMPL0, mbrtowc
-        | int 3
         | call TMPL0
-        | int 3
         | mov TMPLP, RET
         | add SP, sizeof(mbstate_t)
         | .if not X64
         | add SP, 4*4
         | .endif
 
+        | test RET, RET
+        | jns =>bk
+        | jnz =>bk
+        | add SP, sizeof(wchar_t)
+        | rstregs
+        | jmp =>errpc
+        |=>bk:
+
         | .if X64
         | mov edi, [SP]
-        | int 3
         | .endif
         switch (instr->value) {
         case 's':
