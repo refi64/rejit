@@ -28,33 +28,6 @@ typedef struct rejit_group_type {
     const char* begin, *end;
 } rejit_group;
 
-typedef long (*rejit_func)(const char*, rejit_group*);
-
-/*! @struct rejit_matcher
-    @brief A compiled regex.
-    @discussion
-    This is the type that is returned when compiling a regular expression. All
-    the fields should be treated as an internal implementation detail except for
-    @link //apple_ref/doc/structfield/rejit_matcher/groups @/link.
-
-    @field groups The number of groups that the compiled regex requires. */
-typedef struct rejit_matcher_type {
-    rejit_func func;
-    size_t sz;
-    int groups;
-}* rejit_matcher;
-
-typedef enum {
-    RJ_INULL, RJ_IWORD, RJ_IDOT, RJ_IBEGIN, RJ_IEND, RJ_IBACK,
-    RJ_ISET, RJ_INSET, RJ_IMSET, RJ_IARG, RJ_ISTAR, RJ_IPLUS, RJ_IOPT, RJ_IREP,
-    RJ_IMSTAR, RJ_IMPLUS, RJ_IVARG, RJ_IOR, RJ_IGROUP, RJ_ICGROUP, RJ_ILAHEAD,
-    RJ_INLAHEAD, RJ_ILBEHIND, RJ_INLBEHIND, RJ_ISKIP
-    /* > iarg: following op is argument.
-       > varg: value is rejit_instruction*.
-       For RJ_IGROUP, RJ_ICGROUP, value points to one past the end of the current
-       group. For RJ_ISET, value is const char*. */
-} rejit_instr_kind;
-
 /*! @enum rejit_flags
     @brief Compile flags.
     @discussion
@@ -71,6 +44,35 @@ typedef enum {
     RJ_FDOTALL  = 1<<2,
     RJ_FUNICODE = 1<<3,
 } rejit_flags;
+
+typedef long (*rejit_func)(const char*, rejit_group*);
+
+/*! @struct rejit_matcher
+    @brief A compiled regex.
+    @discussion
+    This is the type that is returned when compiling a regular expression. All
+    the fields should be treated as an internal implementation detail except for
+    @link //apple_ref/doc/structfield/rejit_matcher/groups @/link.
+
+    @field groups The number of groups that the compiled regex requires.
+    @field flags The flags the regex was compiled with. */
+typedef struct rejit_matcher_type {
+    rejit_func func;
+    size_t sz;
+    int groups;
+    rejit_flags flags;
+}* rejit_matcher;
+
+typedef enum {
+    RJ_INULL, RJ_IWORD, RJ_IDOT, RJ_IBEGIN, RJ_IEND, RJ_IBACK,
+    RJ_ISET, RJ_INSET, RJ_IMSET, RJ_IARG, RJ_ISTAR, RJ_IPLUS, RJ_IOPT, RJ_IREP,
+    RJ_IMSTAR, RJ_IMPLUS, RJ_IVARG, RJ_IOR, RJ_IGROUP, RJ_ICGROUP, RJ_ILAHEAD,
+    RJ_INLAHEAD, RJ_ILBEHIND, RJ_INLBEHIND, RJ_ISKIP
+    /* > iarg: following op is argument.
+       > varg: value is rejit_instruction*.
+       For RJ_IGROUP, RJ_ICGROUP, value points to one past the end of the current
+       group. For RJ_ISET, value is const char*. */
+} rejit_instr_kind;
 
 typedef struct rejit_instruction_type {
     rejit_instr_kind kind;
@@ -147,8 +149,10 @@ void rejit_free_tokens(rejit_token_list tokens);
     to @link RJ_PE_NONE @/link.
 
     @param str The string to parse.
-    @param err The location to write errors to. */
-rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err);
+    @param err The location to write errors to.
+    @param flags The flags to use during parsing. */
+rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err,
+                               rejit_flags flags);
 /*! @function rejit_free_parse_result
     @brief Free the value returned from @link rejit_parse_result @/link. */
 void rejit_free_parse_result(rejit_parse_result res);

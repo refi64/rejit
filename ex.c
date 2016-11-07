@@ -10,7 +10,7 @@
 
 rejit_matcher compile(char* regex) {
     rejit_parse_error err;
-    rejit_matcher m = rejit_parse_compile(regex, &err, RJ_FNONE);
+    rejit_matcher m = rejit_parse_compile(regex, &err, RJ_FUNICODE);
     if (err.kind != RJ_PE_NONE) {
         ERR("parse error at %zu: ", err.pos);
         switch (err.kind) {

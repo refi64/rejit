@@ -6,6 +6,7 @@
 
 #include <sys/mman.h>
 #include <assert.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <wctype.h>
 #include <stdio.h>
@@ -175,11 +176,24 @@ rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
     res->func = func;
     res->sz = sz;
     res->groups = groups;
+    res->flags = flags;
     return res;
 }
 
 int rejit_match(rejit_matcher m, const char* str, rejit_group* groups) {
-    return m->func(str, groups);
+    char* old_locale = NULL;
+    int ret;
+    if (m->flags & RJ_FUNICODE) {
+        old_locale = strdup(setlocale(LC_ALL, NULL));
+        if (old_locale)
+            setlocale(LC_ALL, "");
+    }
+    ret = m->func(str, groups);
+    if (old_locale) {
+        setlocale(LC_ALL, old_locale);
+        free(old_locale);
+    }
+    return ret;
 }
 
 int rejit_search(rejit_matcher m, const char* str, const char** tgt,

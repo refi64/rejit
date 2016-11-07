@@ -19,6 +19,7 @@
 | .define TMPD1, edx
 | .define TMPL0, r9
 | .define TMPL1, rdx
+| .define TMPLP, rbx
 | .define RET, rax
 | .define SP, rsp
 | .define TS, rcx
@@ -67,6 +68,7 @@
 | .define TMPD1, ebp
 | .define TMPL0, TMPD0
 | .define TMPL1, TMPD1
+| .define TMPLP, ebx
 | .define RET, eax
 | .define SP, esp
 | .define TS, RET
@@ -394,14 +396,16 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         assert(sizeof(wchar_t) == 4);
         assert(sizeof(wint_t) == 4);
         assert(sizeof(mbstate_t) == 8);
+        | push TMPLP
         | saveregs
         | .if X64
+        | mov rsi, STR
         | sub SP, sizeof(wchar_t)
         | mov rdi, SP
+        | int 3
         | sub SP, sizeof(mbstate_t)
         | xor rax, rax
         | mov [SP], rax
-        | mov rsi, STR
         | mov rdx, MB_CUR_MAX
         | mov rcx, SP
         | .else
@@ -417,16 +421,18 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         | push TMPD0
         | .endif
         | mov TMPL0, mbrtowc
+        | int 3
         | call TMPL0
-        | add STR, RET
+        | int 3
+        | mov TMPLP, RET
         | add SP, sizeof(mbstate_t)
         | .if not X64
-        | add SP, 4*3
+        | add SP, 4*4
         | .endif
 
+        | .if X64
         | mov edi, [SP]
-        | .if not X64
-        | push edi
+        | int 3
         | .endif
         switch (instr->value) {
         case 's':
@@ -440,6 +446,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             break;
         }
         | call TMPL0
+        | add SP, sizeof(wchar_t)
         | xor TMPB, TMPB
         | test RET, RET
         if (instr->value2)
@@ -447,6 +454,8 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         else
             | setne TMPB
         | rstregs
+        | add STR, TMPLP
+        | pop TMPLP
         | test TMPB, TMPB
         | jz =>errpc
         break;

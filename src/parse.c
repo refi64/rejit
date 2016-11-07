@@ -426,7 +426,8 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
     }
 }
 
-rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
+rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err,
+                               rejit_flags flags) {
     long* suffixes;
     pipe* pipes;
 
@@ -435,7 +436,7 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err) {
     res.instrs = NULL;
     res.groups = 0;
     res.maxdepth = 0;
-    res.flags = RJ_FNONE;
+    res.flags = flags;
 
     err->kind = RJ_PE_NONE;
     err->pos = 0;

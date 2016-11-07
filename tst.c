@@ -63,7 +63,8 @@ LIBCUT_TEST(test_tokenize) {
     LIBCUT_TEST_EQ(tokens.tokens[11].len, 2);
 }
 
-#define PARSE(s) res = rejit_parse(s, &err); LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
+#define PARSE(s) res = rejit_parse(s, &err, RJ_FNONE); \
+                 LIBCUT_TEST_EQ(err.kind, RJ_PE_NONE);
 
 LIBCUT_TEST(test_parse_word) {
     rejit_parse_error err;
@@ -140,19 +141,19 @@ LIBCUT_TEST(test_parse_suffix) {
 
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
-    rejit_parse("+", &err);
+    rejit_parse("+", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_SYNTAX);
     LIBCUT_TEST_EQ(err.pos, 0);
 
-    rejit_parse("a{a5}", &err);
+    rejit_parse("a{a5}", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_INT);
     LIBCUT_TEST_EQ(err.pos, 2);
 
-    rejit_parse("a{2a,5}", &err);
+    rejit_parse("a{2a,5}", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_INT);
     LIBCUT_TEST_EQ(err.pos, 3);
 
-    rejit_parse("a{2,b}", &err);
+    rejit_parse("a{2,b}", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_INT);
     LIBCUT_TEST_EQ(err.pos, 4);
 }
@@ -188,11 +189,11 @@ LIBCUT_TEST(test_parse_group) {
 
     LIBCUT_TEST_EQ(res.instrs[3].kind, RJ_INULL);
 
-    rejit_parse("((a)", &err);
+    rejit_parse("((a)", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_UBOUND);
     LIBCUT_TEST_EQ(err.pos, 4);
 
-    rejit_parse("(a))b", &err);
+    rejit_parse("(a))b", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_UBOUND);
     LIBCUT_TEST_EQ(err.pos, 3);
 }
@@ -273,11 +274,11 @@ LIBCUT_TEST(test_parse_set) {
     LIBCUT_TEST_EQ((char)res.instrs[0].value, 'w');
     LIBCUT_TEST_EQ(res.instrs[0].value2, 1);
 
-    rejit_parse("[abc", &err);
+    rejit_parse("[abc", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_UBOUND);
     LIBCUT_TEST_EQ(err.pos, 0);
 
-    rejit_parse("[z-a]", &err);
+    rejit_parse("[z-a]", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_RANGE);
     LIBCUT_TEST_EQ(err.pos, 2);
 }
@@ -386,7 +387,7 @@ LIBCUT_TEST(test_parse_lookbehind) {
 
     LIBCUT_TEST_EQ(res.instrs[2].kind, RJ_INULL);
 
-    rejit_parse("(?<=a*)", &err);
+    rejit_parse("(?<=a*)", &err, RJ_FNONE);
     LIBCUT_TEST_EQ(err.kind, RJ_PE_LBVAR);
     LIBCUT_TEST_EQ(err.pos, 5);
 }
