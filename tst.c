@@ -565,6 +565,30 @@ LIBCUT_TEST(test_nset) {
     LIBCUT_TEST_EQ(rejit_match(m, "", NULL), 0);
 }
 
+LIBCUT_TEST(test_uset) {
+    // \w, \d, \W
+    rejit_instruction wi[] = {{RJ_IPLUS}, {RJ_IUSET, 'w'}, {RJ_INULL}};
+    rejit_matcher m = rejit_compile_instrs(wi, 0, 0, RJ_FUNICODE);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "Ã", NULL), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "1", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "٠", NULL), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "!", NULL), -1);
+
+    rejit_instruction di[] = {{RJ_IPLUS}, {RJ_IUSET, 'd'}, {RJ_INULL}};
+    m = rejit_compile_instrs(di, 0, 0, RJ_FUNICODE);
+    LIBCUT_TEST_EQ(rejit_match(m, "1", NULL), 1);
+    LIBCUT_TEST_EQ(rejit_match(m, "٠", NULL), 2);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
+
+    rejit_instruction nwi[] = {{RJ_IPLUS}, {RJ_IUSET, 'w', 1}, {RJ_INULL}};
+    m = rejit_compile_instrs(nwi, 0, 0, RJ_FUNICODE);
+    LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "Ã", NULL), -1);
+    LIBCUT_TEST_EQ(rejit_match(m, "1", NULL), -1);
+    /* LIBCUT_TEST_EQ(rejit_match(m, "!", NULL), 1); */
+}
+
 LIBCUT_TEST(test_or) {
     // a|b
     rejit_instruction instrs[] = {{RJ_IOR}, {RJ_IWORD, (intptr_t)"a"},
@@ -1000,7 +1024,7 @@ LIBCUT_MAIN(
     test_parse_pipe_suffix, test_parse_other,
 
     test_chr, test_dot, test_plus, test_star, test_opt, test_rep, test_begin,
-    test_end, test_set, test_nset, test_or, test_group, test_cgroup,
+    test_end, test_set, test_nset, test_uset, test_or, test_group, test_cgroup,
     test_opt_group, test_star_group, test_plus_group, test_lookahead,
     test_negative_lookahead, test_lookbehind, test_negative_lookbehind,
     test_mplus, test_mstar, test_or_mixed, test_set_and_dot, test_or_group,
