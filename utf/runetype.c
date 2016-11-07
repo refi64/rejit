@@ -16,6 +16,11 @@
 #include "plan9.h"
 #include "utf.h"
 
+
+static Rune __numbers[] = {
+    #include "../uni/number_table"
+};
+
 /*
  * alpha ranges -
  *	only covers ranges not in lower||upper
@@ -1087,6 +1092,15 @@ totitlerune(Rune c)
 	if(p && c == p[0])
 		return c + p[1] - 500;
 	return c;
+}
+
+int
+isdigitrune(Rune c)
+{
+    Rune* p;
+
+    p = bsearch(c, __numbers, nelem(__numbers)/2, 2);
+    return p && c >= p[0] && c <= p[1];
 }
 
 int

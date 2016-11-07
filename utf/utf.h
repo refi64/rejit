@@ -1,7 +1,7 @@
 #ifndef _UTF_H_
 #define _UTF_H_ 1
 #if defined(__cplusplus)
-extern "C" { 
+extern "C" {
 #endif
 
 typedef unsigned int Rune;	/* 32 bits */
@@ -18,6 +18,7 @@ enum
 /* Edit .+1,/^$/ | cfn $PLAN9/src/lib9/utf/?*.c | grep -v static |grep -v __ */
 int		chartorune(Rune *rune, char *str);
 int		fullrune(char *str, int n);
+int		isdigitrune(Rune c);
 int		isalpharune(Rune c);
 int		islowerrune(Rune c);
 int		isspacerune(Rune c);

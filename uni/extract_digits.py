@@ -36,6 +36,6 @@ print('Printing number table...')
 with open('number_table', 'w') as f:
     for start, end in ranges:
         assert start+1 != end
-        print('{%#x, %#x},' % (start, end), file=f)
+        print('%#x, %#x,' % (start, end), file=f)
 
 print('Done!')
