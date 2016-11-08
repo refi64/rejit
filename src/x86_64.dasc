@@ -432,7 +432,22 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         | call TMPL0
         | xor TMPB, TMPB
         | test RET, RET
-        if (instr->value2) {
+        if (instr->value == 'w') {
+            GROW;
+            GROW;
+            | jnz =>*pcl-2
+            | cmp dword [SP], '_'
+            if (instr->value2) {
+                | setne TMPB
+            } else {
+                | sete TMPB
+            }
+            | jmp =>*pcl-1
+            |=>*pcl-2:
+            | mov TMPB, !instr->value2
+            |=>*pcl-1:
+        }
+        else if (instr->value2) {
             | setz TMPB
         } else {
             | setnz TMPB

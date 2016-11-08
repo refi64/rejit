@@ -569,6 +569,7 @@ LIBCUT_TEST(test_uset) {
     // \w, \d, \W
     rejit_instruction wi[] = {{RJ_IPLUS}, {RJ_IUSET, 'w'}, {RJ_INULL}};
     rejit_matcher m = rejit_compile_instrs(wi, 0, 0, RJ_FUNICODE);
+    LIBCUT_TEST_EQ(rejit_match(m, "_", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), 1);
     LIBCUT_TEST_EQ(rejit_match(m, "Ã", NULL), 2);
     LIBCUT_TEST_EQ(rejit_match(m, "1", NULL), 1);
@@ -583,6 +584,7 @@ LIBCUT_TEST(test_uset) {
 
     rejit_instruction nwi[] = {{RJ_IPLUS}, {RJ_IUSET, 'w', 1}, {RJ_INULL}};
     m = rejit_compile_instrs(nwi, 0, 0, RJ_FUNICODE);
+    LIBCUT_TEST_EQ(rejit_match(m, "_", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "a", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "Ã", NULL), -1);
     LIBCUT_TEST_EQ(rejit_match(m, "1", NULL), -1);
