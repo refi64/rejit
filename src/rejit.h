@@ -15,6 +15,8 @@
 #include <inttypes.h>
 #include <string.h>
 
+typedef uint64_t rj_ui64;
+
 /*! @struct rejit_group
     @brief A group.
     @discussion

@@ -193,9 +193,9 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
 static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
                         int* pcl, int saved, int maxdepth, rejit_flags flags) {
     rejit_instruction* ia, *ib, *ic;
-    unsigned long magic;
+    rj_ui64 magic;
     char min = 0, *s;
-    int ebk = errpc, bk, i;
+    int bk, i;
     size_t len;
     if (instr->kind > RJ_ISKIP) return;
     switch (instr->kind) {
@@ -485,7 +485,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
     case RJ_INLAHEAD:
     case RJ_ILBEHIND:
     case RJ_INLBEHIND:
-        errpc = bk = *pcl;
+        bk = *pcl;
         GROW;
         GROW;
         if (instr->kind != RJ_INLAHEAD && instr->kind != RJ_INLBEHIND) GROW;
@@ -511,16 +511,12 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             len > 0) {
             | sub STR, len
             | cmp STR, SAV
-            if (instr->kind == RJ_ILBEHIND)
-                | jl =>errpc
-            else
-                | jl =>bk
+            | jl =>bk
         }
         for (; ia != ib; ++ia) {
-            compile_one(Dst, ia, errpc, pcl, saved+1, maxdepth, flags);
+            compile_one(Dst, ia, bk, pcl, saved+1, maxdepth, flags);
             skip(ia);
         }
-        errpc = ebk;
         if (instr->kind == RJ_INLAHEAD || instr->kind == RJ_INLBEHIND) {
             | rstsave
             | jmp =>errpc
