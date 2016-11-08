@@ -23,18 +23,20 @@ Requirements
 - Python 3.
 - Lua.
 - `Libcut <https://github.com/kirbyfan64/libcut>`_ if you want to build the tests.
-- `Headerdoc <https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/HeaderDoc/intro/intro.html>`_
-  if you want to build the documentation.
+- `Headerdoc <https://web.archive.org/web/20160217120658/https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/HeaderDoc/intro/intro.html>`_
+  if you want to build the documentation. (Note that Headerdoc is no longer actually
+  maintained, so this is a link to the page on archive.org). The download is
+  available `here <https://opensource.apple.com/tarballs/headerdoc/headerdoc-8.9.26.tar.gz>`_.
 
 Building
 ********
 
 Just run::
-   
+
    $ fbuild
 
 To build the documentation, run::
-   
+
    $ fbuild docs
 
 Usage

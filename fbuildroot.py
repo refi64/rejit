@@ -150,6 +150,10 @@ def build(ctx):
 @register()
 def docs(ctx):
     rec = configure(ctx)
+
+    if rec.headerdoc is None:
+        raise fbuild.Error("Fbuild wasn't configured with headerdoc support.")
+
     output = ctx.buildroot / 'docs'
     rejit_h = Path('src/rejit.h')
 

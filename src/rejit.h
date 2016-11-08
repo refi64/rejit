@@ -39,7 +39,7 @@ typedef struct rejit_group_type {
     @const RJ_FNONE No flags.
     @const RJ_FICASE Case insensitive matching.
     @const RJ_FDOTALL Make dot (<code>.</code>) also match newlines.
-    @const RJ_UNICODE Make character classes Unicode-aware. */
+    @const RJ_FUNICODE Make character classes Unicode-aware. */
 typedef enum {
     RJ_FNONE    = 1<<0,
     RJ_FICASE   = 1<<1,
