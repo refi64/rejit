@@ -52,10 +52,11 @@ def get_target_arch(ctx, c):
     ctx.logger.check('determining target architecture')
     prog = '''
     #include <stdio.h>
+    #include "rejit.h"
 
-    #if defined(__i386__) || defined(__i386) || defined(i386)
+    #if RJ_X86
     #define ARCH "i386"
-    #elif defined(__x86_64__) || defined(__x86_64)
+    #elif RJ_X64
     #define ARCH "x86_64"
     #else
     #error unsupported target architecture
@@ -105,7 +106,7 @@ def configure(ctx):
         kw['debug'] = True
         kw['macros'] = ['DEBUG']
 
-    c = guess_static(ctx, exe=ctx.options.cc, flags=flags, includes=['utf'],
+    c = guess_static(ctx, exe=ctx.options.cc, flags=flags, includes=['utf', 'src'],
         platform_options=[
             ({'posix'}, {'external_libs+': ['rt']}),
             ({'gcc'}, {'flags+': ['-Wno-maybe-uninitialized']}),
@@ -141,11 +142,10 @@ def build(ctx):
     src = rec.dasm.translate('src/x86_64.dasc', 'codegen.c')
     rejit = rec.c.build_lib('rejit', Path.glob('src/*.c') + Path.glob('utf/*.c'),
         includes=['.', ctx.buildroot])
-    rec.c.build_exe('bench', ['bench.c'], includes=['src'], libs=[rejit])
-    rec.c.build_exe('ex', ['ex.c'], includes=['src'], libs=[rejit])
+    rec.c.build_exe('bench', ['bench.c'], libs=[rejit])
+    rec.c.build_exe('ex', ['ex.c'], libs=[rejit])
     if rec.tests:
-        rec.c.build_exe('tst', ['tst.c'], includes=['src'], cflags=rec.testflags,
-                        libs=[rejit])
+        rec.c.build_exe('tst', ['tst.c'], cflags=rec.testflags, libs=[rejit])
 
 @register()
 def docs(ctx):

@@ -367,22 +367,22 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
                     | jmp =>UK
                     |=>*pcl-1:
                 }
-            GROW;
             if (__builtin_popcountl(magic) == 1) {
                 int j=0;
                 i = magic;
                 while (i>>=1) ++j;
-                | cmp byte [STR], j+min
+                | cmp TMPB, j+min
                 | je =>SK
             } else {
+                GROW;
                 | movzx TMPD1, TMPB
                 | sub TMPD1, min
                 | js =>*pcl-1
                 | mov TMPD0, magic
                 | bt TMPD0, TMPD1
                 | jb =>SK
+                |=>*pcl-1:
             }
-            |=>*pcl-1:
         }
         if (instr->kind == RJ_ISET) {
             | jmp =>errpc

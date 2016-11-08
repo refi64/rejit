@@ -5,6 +5,14 @@
 #ifndef REJIT_H
 #define REJIT_H
 
+#if defined(__i386__) || defined(__i386) || defined(i386)
+#define RJ_X86 1
+#elif defined(__x86_64__) || defined(__x86_64)
+#define RJ_X64 1
+#else
+#error unsupported target architecture
+#endif
+
 /*! @header
     @author Ryan Gonzalez
     @unsorted

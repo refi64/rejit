@@ -540,7 +540,7 @@ LIBCUT_TEST(test_end) {
 }
 
 LIBCUT_TEST(test_set) {
-    // [xyz]
+    // [\txyz]
     char s[] = "\txyz\0    ";
     rejit_instruction instrs[] = {{RJ_ISET, (intptr_t)s}, {RJ_INULL}};
     rejit_matcher m = rejit_compile_instrs(instrs, 0, 0, RJ_FNONE);
