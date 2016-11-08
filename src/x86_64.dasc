@@ -194,7 +194,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
                         int* pcl, int saved, int maxdepth, rejit_flags flags) {
     rejit_instruction* ia, *ib, *ic;
     unsigned long magic;
-    char min, *s;
+    char min = 0, *s;
     int ebk = errpc, bk, i;
     size_t len;
     if (instr->kind > RJ_ISKIP) return;
@@ -338,54 +338,54 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
     case RJ_ISET:
     case RJ_INSET:
         s = (char*)instr->value;
-        magic = genmagic(s, &min, &len, flags & RJ_FICASE);
         bk = *pcl;
         #define SK (instr->kind == RJ_ISET ? bk : errpc)
         #define UK (instr->kind == RJ_ISET ? bk+1 : errpc)
         #define AE (instr->kind == RJ_ISET ? errpc : bk)
         GROW;
         GROW;
+        | mov TMPB, [STR]
         if (instr->kind == RJ_INSET) {
-            | cmp byte [STR], 0
-            | je =>bk+1
+            | test TMPB, TMPB
+            | jz =>bk+1
         }
-        for (i=len+1; i<len*2+1; ++i)
-            if (!s[i]) {
-                char c = s[i-len-1];
-                | cmp byte [STR], c
-                | je =>SK
-                if (flags & RJ_FICASE) {
-                    c = isupper(c) ? tolower(c) : toupper(c);
-                    | cmp byte [STR], c
-                    | je =>SK
-                }
-            } else if (s[i] == 'W') {
-                int j;
-                const char* ust = &s[i-len-1];
-                GROW;
-                | cmp byte [STR], *ust
-                | jne =>*pcl-1
-                ++i;
-                for (j=1; s[i] == 'U'; ++i, ++j) {
-                    | cmp byte[STR+j], ust[j]
+        while (genmagic(s, &min, &len, &magic, flags & RJ_FICASE)) {
+            for (i=len+1; i<len*2+1; ++i)
+               if (s[i] == 'W') {
+                    int j;
+                    const char* ust = &s[i-len-1];
+                    GROW;
+                    | cmp TMPB, *ust
                     | jne =>*pcl-1
+                    ++i;
+                    for (j=1; s[i] == 'U'; ++i, ++j) {
+                        | cmp byte[STR+j], ust[j]
+                        | jne =>*pcl-1
+                    }
+                    --i;
+                    | add STR, j
+                    | jmp =>UK
+                    |=>*pcl-1:
                 }
-                --i;
-                | add STR, j
-                | jmp =>UK
-                | =>*pcl-1:
+            GROW;
+            if (__builtin_popcountl(magic) == 1) {
+                int j=0;
+                i = magic;
+                while (i>>=1) ++j;
+                | cmp byte [STR], j+min
+                | je =>SK
+            } else {
+                | movzx TMPD1, TMPB
+                | sub TMPD1, min
+                | js =>*pcl-1
+                | mov TMPD0, magic
+                | bt TMPD0, TMPD1
+                | jb =>SK
             }
-        if (magic) {
-            | movzx TMPD1, byte [STR]
-            | sub TMPD1, min
-            | js =>AE
-            | mov TMPD0, magic
-            | bt TMPD0, TMPD1
-            | jae =>AE
-            if (instr->kind == RJ_INSET)
-                | jmp =>errpc
-        } else {
-            | jmp =>AE
+            |=>*pcl-1:
+        }
+        if (instr->kind == RJ_ISET) {
+            | jmp =>errpc
         }
         |=>bk:
         | inc STR

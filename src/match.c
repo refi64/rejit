@@ -23,18 +23,31 @@ static void compile_one(dasm_State**, rejit_instruction*, int, int*, int, int,
 
 #define GROW dasm_growpc(Dst, ++*pcl)
 
-static unsigned long genmagic(char* s, char* min, size_t* len, int icase) {
-    unsigned long res=0;
+static int genmagic(char* s, char* min, size_t* len, unsigned long* magic,
+                    int icase) {
+    unsigned long prev=0;
+    int done = 1;
     char* b = s;
     Rune r;
     // Get minimum.
-    *min = *s;
-    for (b=s; *s; ++s) {
-        // Uppercase chars always have a lower ASCII value than lowercase.
-        char c = icase ? toupper(*s) : *s;
-        if (c < *min) *min = c;
+    if (*min) {
+        *min = 0;
+        prev = 1;
+        for (b=s; *s; ++s) {
+            char c = *s, x = b[*len+(s-b)+1];
+            if (!x && (!*min || c < *min)) *min = c;
+        }
+        if (!*min) return 0;
+    } else {
+        *min = *s;
+        for (b=s; *s; ++s) {
+            // Uppercase chars always have a lower ASCII value than lowercase.
+            char c = icase ? toupper(*s) : *s;
+            if (c < *min) *min = c;
+        }
     }
     *len = s-b;
+    *magic = 0;
     for (s=b; *s; ++s) {
         int j, rl = chartorune(&r, s);
         if (rl > 1) {
@@ -44,18 +57,25 @@ static unsigned long genmagic(char* s, char* min, size_t* len, int icase) {
                 b[*len+(s-b+i)+1] = 'U';
             }
             s += rl-1;
+            done = 0;
             continue;
         }
         for (j=0; j<(icase?2:1); ++j) {
             int diff;
-            char c = *s;
+            char c = *s, *x = &b[*len+(s-b)+1];
+            if (prev && *x) continue;
             if (icase) c = j ? toupper(c) : tolower(c);
             diff = c-*min;
-            if (diff > sizeof(res)*8-1) b[*len+(s-b)+1] = 0;
-            else res |= 1lu<<diff;
+            if (diff > sizeof(unsigned long)*8-1) *x = 0;
+            else {
+                *magic |= 1lu<<diff;
+                done = 0;
+                *x = 1;
+            }
         }
     }
-    return res;
+
+    return !done;
 }
 
 int rejit_match_len(rejit_instruction* instr) {

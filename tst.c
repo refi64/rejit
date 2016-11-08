@@ -700,7 +700,7 @@ LIBCUT_TEST(test_lookahead) {
 
 LIBCUT_TEST(test_negative_lookahead) {
     // (?!ab)[ab]*
-    const char s[] = "ab\0  ";
+    char s[] = "ab\0  ";
     rejit_instruction instrs[] = {{RJ_INLAHEAD}, {RJ_IWORD, (intptr_t)"ab"},
                                   {RJ_ISTAR}, {RJ_ISET, (intptr_t)s}, {RJ_INULL}};
     instrs[0].value = (intptr_t)&instrs[2];
@@ -727,7 +727,7 @@ LIBCUT_TEST(test_lookbehind) {
 
 LIBCUT_TEST(test_negative_lookbehind) {
     // [ab]*(?<!a)c
-    const char s[] = "ab\0  ";
+    char s[] = "ab\0  ";
     rejit_instruction instrs[] = {{RJ_ISTAR}, {RJ_ISET, (intptr_t)s},
                                   {RJ_INLBEHIND}, {RJ_IWORD, (intptr_t)"a", 0, 1},
                                   {RJ_IWORD, (intptr_t)"c"}, {RJ_INULL}};
