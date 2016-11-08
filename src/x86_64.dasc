@@ -193,7 +193,7 @@ static void compile_epilog(dasm_State** Dst, int* pcl, int maxdepth) {
 static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
                         int* pcl, int saved, int maxdepth, rejit_flags flags) {
     rejit_instruction* ia, *ib, *ic;
-    rj_ui64 magic;
+    rj_word magic;
     char min = 0, *s;
     int bk, i;
     size_t len;

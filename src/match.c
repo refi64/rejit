@@ -23,7 +23,7 @@ static void compile_one(dasm_State**, rejit_instruction*, int, int*, int, int,
 
 #define GROW dasm_growpc(Dst, ++*pcl)
 
-static int genmagic(char* s, char* min, size_t* len, rj_ui64* magic, int icase) {
+static int genmagic(char* s, char* min, size_t* len, rj_word* magic, int icase) {
     int done=1, prev=0;
     char* b = s;
     Rune r;

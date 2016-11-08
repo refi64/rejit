@@ -23,7 +23,11 @@
 #include <inttypes.h>
 #include <string.h>
 
-typedef uint64_t rj_ui64;
+#if RJ_X86
+typedef uint32_t rj_word;
+#elif RJ_X64
+typedef uint64_t rj_word;
+#endif
 
 /*! @struct rejit_group
     @brief A group.
