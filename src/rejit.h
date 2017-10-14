@@ -23,6 +23,8 @@
 #include <inttypes.h>
 #include <string.h>
 
+typedef uint32_t Rune;
+
 #if RJ_X86
 typedef uint32_t rj_word;
 #elif RJ_X64
@@ -39,7 +41,7 @@ typedef uint64_t rj_word;
     @field begin A pointer to the beginning of the match.
     @field end A pointer to the end of the match. */
 typedef struct rejit_group_type {
-    const char* begin, *end;
+    Rune* begin, *end;
 } rejit_group;
 
 /*! @enum rejit_flags
@@ -50,16 +52,14 @@ typedef struct rejit_group_type {
 
     @const RJ_FNONE No flags.
     @const RJ_FICASE Case insensitive matching.
-    @const RJ_FDOTALL Make dot (<code>.</code>) also match newlines.
-    @const RJ_FUNICODE Make character classes Unicode-aware. */
+    @const RJ_FDOTALL Make dot (<code>.</code>) also match newlines. */
 typedef enum {
     RJ_FNONE    = 1<<0,
     RJ_FICASE   = 1<<1,
     RJ_FDOTALL  = 1<<2,
-    RJ_FUNICODE = 1<<3,
 } rejit_flags;
 
-typedef long (*rejit_func)(const char*, rejit_group*);
+typedef long (*rejit_func)(void*, rejit_group*);
 
 /*! @struct rejit_matcher
     @brief A compiled regex.
@@ -85,7 +85,7 @@ typedef enum {
     /* > iarg: following op is argument.
        > varg: value is rejit_instruction*.
        For RJ_IGROUP, RJ_ICGROUP, value points to one past the end of the current
-       group. For RJ_ISET, value is const char*. */
+       group. For RJ_ISET, value is Rune*. */
 } rejit_instr_kind;
 
 typedef struct rejit_instruction_type {
@@ -102,7 +102,7 @@ typedef struct rejit_token_type {
         RJ_TSUF,
         RJ_TSTAR, RJ_TPLUS, RJ_TQ, RJ_TREP,
     } kind;
-    const char* pos;
+    Rune* pos;
     size_t len;
 } rejit_token;
 
@@ -151,7 +151,7 @@ typedef struct rejit_parse_error_type {
     size_t pos;
 } rejit_parse_error;
 
-rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err);
+rejit_token_list rejit_tokenize(Rune* rstr, rejit_parse_error* err);
 void rejit_free_tokens(rejit_token_list tokens);
 /*! @function rejit_parse
     @brief Parse a string.
@@ -162,17 +162,17 @@ void rejit_free_tokens(rejit_token_list tokens);
     //apple_ref/doc/structfield/rejit_parse_error/kind @/link</code> will be set
     to @link RJ_PE_NONE @/link.
 
-    @param str The string to parse.
+    @param rstr The string to parse.
     @param err The location to write errors to.
     @param flags The flags to use during parsing. */
-rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err,
+rejit_parse_result rejit_parse(Rune* rstr, rejit_parse_error* err,
                                rejit_flags flags);
 /*! @function rejit_free_parse_result
     @brief Free the value returned from @link rejit_parse_result @/link. */
 void rejit_free_parse_result(rejit_parse_result res);
 int rejit_match_len(rejit_instruction* instr);
-rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
-                                   int maxdepth, rejit_flags flags);
+rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups, int maxdepth,
+                                   rejit_flags flags);
 /*! @function rejit_compile
     @brief Compile the result of calling @link rejit_parse @/link.
 
@@ -186,20 +186,19 @@ rejit_matcher rejit_compile(rejit_parse_result res, rejit_flags flags);
     @discussion
     A wrapper over @link rejit_parse @/link and @link rejit_compile @/link. See
     those two functions for descriptions of the arguments. */
-rejit_matcher rejit_parse_compile(const char* str, rejit_parse_error* err,
-                                  rejit_flags flags);
+rejit_matcher rejit_parse_compile(Rune* rstr, rejit_parse_error* err, rejit_flags flags);
 /*! @function rejit_match
     @brief Test if @link //apple_ref/doc/functionparam/rejit_match/str @/link
           starts with the pattern in @link
           //apple_ref/doc/functionparam/rejit_match/m @/link.
 
     @param m The regex to match.
-    @param str The string to attempt to match.
+    @param rstr The string to attempt to match.
     @param groups A pointer to an array of groups. If @link m @/link->@link
                   //apple_ref/doc/structfield/rejit_matcher/groups @/link is 0,
                   then this parameter may be NULL.
     @result The length of the match. */
-int rejit_match(rejit_matcher m, const char* str, rejit_group* groups);
+int rejit_match(rejit_matcher m, Rune* rstr, rejit_group* groups);
 /*! @brief Test if @link //apple_ref/doc/functionparam/rejit_match/str @/link
            contains the pattern in @link
            //apple_ref/doc/functionparam/rejit_match/m @/link.
@@ -211,8 +210,7 @@ int rejit_match(rejit_matcher m, const char* str, rejit_group* groups);
                point to that location. Otherwise, it will be NULL. If this
                parameter is NULL, then nothing will occur.
     @result The length of the match. */
-int rejit_search(rejit_matcher m, const char* str, const char** tgt,
-                 rejit_group* groups);
+int rejit_search(rejit_matcher m, Rune* rstr, Rune** tgt, rejit_group* groups);
 /*! @function rejit_free_matcher
     @brief Free the given matcher. */
 void rejit_free_matcher(rejit_matcher m);

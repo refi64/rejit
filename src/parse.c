@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include "utf/utf.h"
 
 #define ALLOC(tgt,sz,f) do {\
     (tgt) = calloc(1, sz);\
@@ -23,8 +24,8 @@
     } else (tgt) = realloc_r;\
 } while (0)
 
-rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
-    const char* start = str;
+rejit_token_list rejit_tokenize(Rune* rstr, rejit_parse_error* err) {
+    Rune* start = rstr;
     rejit_token_list tokens;
     int escaped = 0, len;
     rejit_token token;
@@ -32,12 +33,12 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
     tokens.tokens = NULL;
     tokens.len = 0;
 
-    while (*str) {
+    while (*rstr) {
         int tkind = RJ_TWORD;
         len = 1;
 
         if (escaped) escaped = 0;
-        else switch (*str) {
+        else switch (*rstr) {
         #define K(c,k) case c: tkind = RJ_T##k; break;
         K('+', PLUS)
         K('*', STAR)
@@ -50,20 +51,20 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
         K(')', RP)
         case '[':
         case '{':
-            tkind = *str == '[' ? RJ_TSET : RJ_TREP;
-            if (tkind == RJ_TSET && str[len] == '^') ++str;
-            while (str[len] && str[len] != (tkind == RJ_TSET ? ']' : '}')) ++len;
-            if (!str[len]) {
+            tkind = *rstr == '[' ? RJ_TSET : RJ_TREP;
+            if (tkind == RJ_TSET && rstr[len] == '^') ++rstr;
+            while (rstr[len] && rstr[len] != (tkind == RJ_TSET ? ']' : '}')) ++len;
+            if (!rstr[len]) {
                 err->kind = RJ_PE_UBOUND;
-                err->pos = str-start;
+                err->pos = rstr-start;
                 return tokens;
             } else ++len;
             break;
         case '\\':
-            if (isdigit(str[1])) {
+            if (isdigitrune(rstr[1])) {
                 tkind = RJ_TBACK;
                 len = 2;
-            } else switch (str[1]) {
+            } else switch (rstr[1]) {
             case 's': case 'S': case 'w': case 'W': case 'd': case 'D':
                 tkind = RJ_TMS;
                 ++len;
@@ -75,9 +76,9 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
         }
 
         token.kind = tkind;
-        token.pos = str;
+        token.pos = rstr;
         token.len = len;
-        str += len;
+        rstr += len;
 
         #define PREV (tokens.tokens[tokens.len-1])
 
@@ -87,7 +88,7 @@ rejit_token_list rejit_tokenize(const char* str, rejit_parse_error* err) {
         else {
             REALLOC(tokens.tokens, sizeof(rejit_token)*(++tokens.len), {
                 err->kind = RJ_PE_MEM;
-                err->pos = str-start;
+                err->pos = rstr-start;
                 return tokens;
             });
             PREV = token;
@@ -121,7 +122,7 @@ typedef struct pipe_type {
     rejit_instruction* instr;
 } pipe;
 
-static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
+static void build_suffix_pipe_list(Rune* rstr, rejit_token_list tokens,
                                    long* suffixes, pipe* pipes,
                                    rejit_parse_error* err) {
     size_t i, prev = -1;
@@ -145,7 +146,7 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
             if (prev == -1) {
                 if (t.kind == RJ_TQ) continue;
                 err->kind = RJ_PE_SYNTAX;
-                err->pos = t.pos - str;
+                err->pos = t.pos - rstr;
                 return;
             }
             suffixes[prev] = i;
@@ -154,7 +155,7 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
             size_t pp;
             if (i+1 == tokens.len) {
                 err->kind = RJ_PE_SYNTAX;
-                err->pos = t.pos - str;
+                err->pos = t.pos - rstr;
                 return;
             }
             pp = st.len == 0 ? 0 : TOS(st)+1;
@@ -165,15 +166,9 @@ static void build_suffix_pipe_list(const char* str, rejit_token_list tokens,
     }
 }
 
-static char dset[] = "0123456789";
-static char wset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-                     "0123456789_";
-static char sset[] = " \t\n\r\f\v";
-
-static char* expand_set(const char* str, const char* set, size_t len,
-                        rejit_parse_error* err) {
+static Rune* expand_set(Rune* rstr, Rune* set, size_t len, rejit_parse_error* err) {
     size_t rlen = 0;
-    char* res, *p;
+    Rune* res, *p;
     int escaped = 0, i;
     for (i=0; i<len; ++i) {
         if (escaped) ++rlen;
@@ -182,7 +177,7 @@ static char* expand_set(const char* str, const char* set, size_t len,
             char b = set[i-1], e = set[i+1];
             if (b > e) {
                 err->kind = RJ_PE_RANGE;
-                err->pos = set+i-str;
+                err->pos = set+i-rstr;
                 return NULL;
             }
             rlen += e-b;
@@ -193,7 +188,7 @@ static char* expand_set(const char* str, const char* set, size_t len,
 
     ALLOC(res, rlen*2+2, {
         err->kind = RJ_PE_MEM;
-        err->pos = set-str;
+        err->pos = set-rstr;
         return NULL;
     });
     p = res;
@@ -216,14 +211,14 @@ static char* expand_set(const char* str, const char* set, size_t len,
     return res;
 }
 
-static void parse(const char* str, rejit_token_list tokens, long* suffixes,
+static void parse(Rune* rstr, rejit_token_list tokens, long* suffixes,
                   pipe* pipes, rejit_parse_result* res, rejit_parse_error* err) {
     size_t i, ninstrs = 0, sl, lbh = 0, lb_later = 0;
     STACK(rejit_instruction*) st;
     STACK(pipe) pst;
     char* s;
     st.len = pst.len = 0;
-    sl = strlen(str);
+    sl = runestrlen(rstr);
     ALLOC(res->instrs, sizeof(rejit_instruction)*(tokens.len+1), {
         err->kind = RJ_PE_MEM;
         err->pos = 0;
@@ -235,7 +230,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
         if (lbh)\
             if (((i)->len = rejit_match_len(i)) == -1) {\
                 err->kind = RJ_PE_LBVAR;\
-                err->pos = (t).pos - str;\
+                err->pos = (t).pos - rstr;\
                 return;\
             }\
     } while (0)
@@ -250,7 +245,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             rejit_token st = tokens.tokens[suffixes[i]];
             CUR.kind = st.kind - RJ_TSTAR + RJ_ISTAR;
             if (st.kind == RJ_TREP) {
-                char* ep;
+                Rune* ep;
                 lb_later = 1;
                 CUR.value = strtol(st.pos+1, &ep, 10);
                 if (*ep == '}') {
@@ -259,13 +254,13 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 }
                 else if (*ep != ',') {
                     err->kind = RJ_PE_INT;
-                    err->pos = ep - str;
+                    err->pos = ep - rstr;
                     return;
                 }
                 CUR.value2 = strtol(ep+1, &ep, 10);
                 if (*ep != '}') {
                     err->kind = RJ_PE_INT;
-                    err->pos = ep - str;
+                    err->pos = ep - rstr;
                     return;
                 }
             }
@@ -296,7 +291,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             CUR.kind = RJ_IWORD;
             ALLOC(s, t.len+1, {
                 err->kind = RJ_PE_MEM;
-                err->pos = t.pos - str;
+                err->pos = t.pos - rstr;
                 return;
             });
             memcpy(s, t.pos, t.len);
@@ -335,7 +330,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                 case '!': CUR.kind = RJ_INLBEHIND; break;
                 default:
                     err->kind = RJ_PE_SYNTAX;
-                    err->pos = wt->pos - str + 1;
+                    err->pos = wt->pos - rstr + 1;
                     return;
                 }
                 ++lbh;
@@ -351,7 +346,6 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
                     #define F(c,f) case c: res->flags |= RJ_F##f; break;
                     F('s', DOTALL)
                     F('i', ICASE)
-                    F('u', UNICODE)
                     default: break;
                     }
                 ++i;
@@ -366,7 +360,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
         case RJ_TRP:
             if (st.len == 0) {
                 err->kind = RJ_PE_UBOUND;
-                err->pos = t.pos - str;
+                err->pos = t.pos - rstr;
                 return;
             }
             LBH(t, TOS(st));
@@ -375,30 +369,17 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
             break;
         case RJ_TSET:
             CUR.kind = *t.pos == '^' ? RJ_INSET : RJ_ISET;
-            s = expand_set(str, t.pos+1, t.len-2, err);
+            s = expand_set(rstr, t.pos+1, t.len-2, err);
             if (err->kind != RJ_PE_NONE) return;
             CUR.value = (intptr_t)s;
             CUR.len = 1;
             ++ninstrs;
             break;
         case RJ_TMS:
-            if (res->flags & RJ_FUNICODE) {
-                CUR.kind = RJ_IUSET;
-                CUR.value = tolower(t.pos[1]);
-                CUR.value2 = !!isupper(t.pos[1]);
-                ++ninstrs;
-            } else {
-                CUR.kind = isupper(t.pos[1]) ? RJ_INSET : RJ_ISET;
-                switch (t.pos[1]) {
-                #define T(l,c,n) case l: case c: s = n##set; break;
-                T('s', 'S', s)
-                T('w', 'W', w)
-                T('d', 'D', d)
-                }
-                CUR.value = (intptr_t)expand_set(NULL, s, strlen(s), NULL);
-                CUR.len = 1;
-                ++ninstrs;
-            }
+            CUR.kind = RJ_IUSET;
+            CUR.value = tolower(t.pos[1]);
+            CUR.value2 = !!isupper(t.pos[1]);
+            ++ninstrs;
             break;
         case RJ_TBACK:
             CUR.kind = RJ_IBACK;
@@ -426,8 +407,7 @@ static void parse(const char* str, rejit_token_list tokens, long* suffixes,
     }
 }
 
-rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err,
-                               rejit_flags flags) {
+rejit_parse_result rejit_parse(Rune* rstr, rejit_parse_error* err, rejit_flags flags) {
     long* suffixes;
     pipe* pipes;
 
@@ -441,7 +421,7 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err,
     err->kind = RJ_PE_NONE;
     err->pos = 0;
 
-    tokens = rejit_tokenize(str, err);
+    tokens = rejit_tokenize(rstr, err);
     if (err->kind != RJ_PE_NONE) return res;
 
     ALLOC(suffixes, sizeof(long)*tokens.len, {
@@ -454,10 +434,10 @@ rejit_parse_result rejit_parse(const char* str, rejit_parse_error* err,
         err->pos = 0;
         return res;
     });
-    build_suffix_pipe_list(str, tokens, suffixes, pipes, err);
+    build_suffix_pipe_list(rstr, tokens, suffixes, pipes, err);
     if (err->kind != RJ_PE_NONE) return res;
 
-    parse(str, tokens, suffixes, pipes, &res, err);
+    parse(rstr, tokens, suffixes, pipes, &res, err);
     free(suffixes);
     free(pipes);
     rejit_free_tokens(tokens);

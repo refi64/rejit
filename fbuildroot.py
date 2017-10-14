@@ -22,7 +22,7 @@ def pre_options(parser):
         make_option('--cflag', help='Pass the given flag to the C++ compiler',
                     action='append', default=[]),
         make_option('--use-color', help='Use colored output',
-                    action='store_true'),
+                    action='store_true', default=True),
         make_option('--release', help='Build in release mode',
                     action='store_true', default=False),
     ))
@@ -35,6 +35,19 @@ class DynAsmBuilder(fbuild.db.PersistentObject):
         self.ctx = ctx
         self.exe = find_program(ctx, exe or ['lua', 'luajit'])
         self.defs = defs
+
+        self.check()
+
+    def check(self):
+        self.ctx.logger.check('checking for lua bitop')
+
+        try:
+            self.ctx.execute([self.exe, '-e', 'require "bit"'], quieter=1)
+        except fbuild.ExecutionError:
+            self.ctx.logger.failed()
+            raise fbuild.Error('lua bitop module is required') from None
+        else:
+            self.ctx.logger.passed()
 
     @fbuild.db.cachemethod
     def translate(self, src: fbuild.db.SRC, dst) -> fbuild.db.DST:

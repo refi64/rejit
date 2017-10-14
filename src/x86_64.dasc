@@ -141,9 +141,11 @@
 || }
 | .endmacro
 
+| .define RUNESZ, 4
+
+
 typedef struct {
-    char* str;
-    void* jmp;
+    void* str, *jmp;
 } thread; // This should be PTRSIZE*2 bytes.
 
 | .type group, rejit_group
@@ -194,42 +196,39 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
                         int* pcl, int saved, int maxdepth, rejit_flags flags) {
     rejit_instruction* ia, *ib, *ic;
     rj_word magic;
-    char min = 0, *s;
+    char min = 0;
+    Rune* rs;
     int bk, i;
     size_t len;
+    assert(sizeof(Rune) == 4);
     if (instr->kind > RJ_ISKIP) return;
     switch (instr->kind) {
     case RJ_ISKIP: printf("RJ_ISKIP was added to RJ_INULL\n"); abort();
     case RJ_IWORD:
-        s = (char*)instr->value;
-        len = strlen(s);
+        rs = (Rune*)instr->value;
+        len = runestrlen(rs);
         i = 0;
-        if (!(flags & RJ_FICASE || len < sizeof(unsigned long))) {
-            for (; i<len - (len % sizeof(unsigned long));
-                 i += sizeof(unsigned long)) {
-                | longcmp [STR+i], (*(unsigned long*)(s+i))
-                | jne =>errpc
-            }
-            i -= i % sizeof(unsigned long);
-        }
         for (; i<len; ++i) {
-            char c = s[i];
-            if (flags & RJ_FICASE && isalpha(c)) {
-                char uc = toupper(c), lc = tolower(c);
+            Rune r = rs[i];
+            if (flags & RJ_FICASE && isalpharune(r)) {
+                Rune ur = toupperrune(r), lr = tolowerrune(r);
                 bk = *pcl;
                 GROW;
-                | mov TMPB, [STR+i]
-                | cmp TMPB, uc
+                | mov TMPD0, [STR+i*RUNESZ]
+                | cmp TMPD0, ur
                 | je =>bk
-                | cmp TMPB, lc
+                | cmp TMPD0, lr
                 | jne =>errpc
                 |=>bk:
             } else {
-                | cmp byte [STR+i], c
+                | cmp dword [STR+i*RUNESZ],r
                 | jne =>errpc
             }
         }
-        | add STR, len
+        if (flags & RJ_FUNICODE)
+            | add STR, len
+        else
+            | add STR, len*RUNESZ
         break;
     case RJ_ISTAR:
     case RJ_IPLUS:
@@ -297,21 +296,24 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             | jz =>errpc
         } else {
             | movzx TMPD0, byte [STR]
+            | cmp TMPD0, RUNE1
+            | jg =>errpc
             | mov TMPD1, 1025
             | bt TMPD1, TMPD0
             | jb =>errpc
         }
-        | inc STR
+        | add STR, RUNESZ
         break;
     case RJ_IBEGIN:
         | cmp SAV, STR
         | jne =>errpc
         break;
     case RJ_IEND:
-        | cmp byte [STR], 0
+        | cmp dword [STR], 0
         | jne =>errpc
         break;
     case RJ_IBACK:
+        /* XXX: this does a byte-by-byte comparison...I wish X64 had like 60 registers. :( */
         bk = *pcl;
         GROW;
         GROW;
@@ -350,7 +352,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             | jz =>bk+1
         }
         while (genmagic(s, &min, &len, &magic, flags & RJ_FICASE)) {
-            for (i=len+1; i<len*2+1; ++i)
+            for (i=len+1; i<len*2+1; ++i) {
                if (s[i] == 'W') {
                     int j;
                     const char* ust = &s[i-len-1];
@@ -367,21 +369,28 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
                     | jmp =>UK
                     |=>*pcl-1:
                 }
-            if (__builtin_popcountl(magic) == 1) {
-                int j=0;
-                i = magic;
-                while (i>>=1) ++j;
-                | cmp TMPB, j+min
-                | je =>SK
-            } else {
-                GROW;
-                | movzx TMPD1, TMPB
-                | sub TMPD1, min
-                | js =>*pcl-1
-                | mov TMPD0, magic
-                | bt TMPD0, TMPD1
-                | jb =>SK
-                |=>*pcl-1:
+            }
+            if (magic) {
+                // Guard to make sure any tested character is a single byte.
+                | cmp TMPB, RUNE1
+                | jg =>AE
+
+                if (__builtin_popcountl(magic) == 1) {
+                    int j=0;
+                    i = magic;
+                    while (i>>=1) ++j;
+                    | cmp TMPB, j+min
+                    | je =>SK
+                } else {
+                    GROW;
+                    | movzx TMPD1, TMPB
+                    | sub TMPD1, min
+                    | js =>*pcl-1
+                    | mov TMPD0, magic
+                    | bt TMPD0, TMPD1
+                    | jb =>SK
+                    |=>*pcl-1:
+                }
             }
         }
         if (instr->kind == RJ_ISET) {
@@ -392,14 +401,13 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
         |=>bk+1:
         break;
     case RJ_IUSET:
-        assert(sizeof(Rune) == 4);
         | mov TMPB, [STR]
         | test TMPB, TMPB
         | jz =>errpc
 
         | push TMPLP
         | saveregs
-        | sub SP, sizeof(Rune)
+        | sub SP, RUNESZ
         | .if X64
         | mov rsi, STR
         | mov rdi, SP
@@ -446,8 +454,7 @@ static void compile_one(dasm_State** Dst, rejit_instruction* instr, int errpc,
             |=>*pcl-2:
             | mov TMPB, !instr->value2
             |=>*pcl-1:
-        }
-        else if (instr->value2) {
+        } else if (instr->value2) {
             | setz TMPB
         } else {
             | setnz TMPB

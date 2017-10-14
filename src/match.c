@@ -17,52 +17,52 @@
 #endif
 
 #define MAXSZ 100
+#define RUNE1 ((1<<6)-1)
 
 static void compile_one(dasm_State**, rejit_instruction*, int, int*, int, int,
                         rejit_flags);
 
 #define GROW dasm_growpc(Dst, ++*pcl)
 
-static int genmagic(char* s, char* min, size_t* len, rj_word* magic, int icase) {
+static int genmagic(Rune* r, char* min, size_t* len, rj_word* magic, int icase) {
     int done=1, prev=0;
-    char* b = s;
-    Rune r;
+    Rune* b = r;
     // Get minimum.
     if (*min) {
         *min = 0;
         prev = 1;
-        for (b=s; *s; ++s) {
-            char c = *s, x = b[*len+(s-b)+1];
+        for (b=r; *r; ++r) {
+            if (*r > RUNE1) continue;
+            char c = *r, x = b[*len+(s-b)+1];
             if (!x && (!*min || c < *min)) *min = c;
         }
         if (!*min) return 0;
     } else {
-        *min = *s;
-        for (b=s; *s; ++s) {
+        *min = 0;
+        for (b=r; *r; ++r) {
+            if (*r > RUNE1) continue;
             // Uppercase chars always have a lower ASCII value than lowercase.
-            char c = icase ? toupper(*s) : *s;
+            char c = icase ? toupperrune(*r) : *r;
             if (c < *min) *min = c;
         }
     }
     *len = s-b;
     *magic = 0;
-    for (s=b; *s; ++s) {
-        int j, rl = chartorune(&r, s);
-        if (rl > 1) {
+    for (r=b; *r; ++r) {
+        if (*r > RUNE1) {
             int i;
-            b[*len+(s-b)+1] = 'W';
+            b[*len+(r-b)+1] = 'W';
             for (i=1; i<rl; ++i) {
-                b[*len+(s-b+i)+1] = 'U';
+                b[*len+(r-b+i)+1] = 'U';
             }
-            s += rl-1;
             done = 0;
             continue;
         }
-        for (j=0; j<(icase?2:1); ++j) {
+        for (j=0; j<(icase ? 2 : 1); ++j) {
             int diff;
-            char c = *s, *x = &b[*len+(s-b)+1];
+            char c = *r, *x = &b[*len+(r-b)+1];
             if (prev && *x) continue;
-            if (icase) c = j ? toupper(c) : tolower(c);
+            if (flags & RJ_FICASE) c = j ? toupper(c) : tolower(c);
             diff = c-*min;
             if (diff > sizeof(unsigned long)*8-1) *x = 0;
             else {
@@ -195,11 +195,11 @@ rejit_matcher rejit_compile_instrs(rejit_instruction* instrs, int groups,
     return res;
 }
 
-int rejit_match(rejit_matcher m, const char* str, rejit_group* groups) {
+int rejit_match(rejit_matcher m, Rune* rstr, rejit_group* groups) {
     return m->func(str, groups);
 }
 
-int rejit_search(rejit_matcher m, const char* str, const char** tgt,
+int rejit_search(rejit_matcher m, Rune* rstr, const char** tgt,
                  rejit_group* groups) {
     int res = -1;
     for (;res == -1 && *str; ++str) {
